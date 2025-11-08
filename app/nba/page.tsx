@@ -236,9 +236,10 @@ export default function NBA() {
         setLoading(true);
         setError(null);
 
-        // Get games for the current day/week
-        const today = new Date();
-        const dateRange = today.toISOString().split('T')[0];
+        // Get games for the selected week (using date range)
+        const weekStartDate = getWeekStartDate(selectedWeek);
+        const weekEndDate = getWeekEndDate(selectedWeek);
+        const dateRange = `${weekStartDate}-${weekEndDate}`;
 
         const scoresResponse = await getNBAScores(dateRange);
         const teamsResponse = await getNBATeams();
@@ -255,6 +256,21 @@ export default function NBA() {
 
     fetchNBAData();
   }, [selectedWeek]);
+
+  // Helper functions for date ranges
+  const getWeekStartDate = (week: number) => {
+    const startDate = new Date(2025, 9, 22); // October 22, 2025 - 2025 NBA season
+    const weekDate = new Date(startDate);
+    weekDate.setDate(startDate.getDate() + (week - 1) * 7);
+    return weekDate.toISOString().split('T')[0].replace(/-/g, '');
+  };
+
+  const getWeekEndDate = (week: number) => {
+    const startDate = new Date(2025, 9, 22); // October 22, 2025 - 2025 NBA season
+    const weekDate = new Date(startDate);
+    weekDate.setDate(startDate.getDate() + (week - 1) * 7 + 6);
+    return weekDate.toISOString().split('T')[0].replace(/-/g, '');
+  };
 
   const getGameDate = (game: number) => {
     // NBA season typically starts in October

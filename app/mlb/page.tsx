@@ -236,9 +236,10 @@ export default function MLB() {
         setLoading(true);
         setError(null);
 
-        // Get games for today (MLB has a long season, so we show current day's games)
-        const today = new Date();
-        const dateRange = today.toISOString().split('T')[0];
+        // Get games for the selected day (using date range)
+        const dayStartDate = getDayStartDate(selectedWeek);
+        const dayEndDate = getDayEndDate(selectedWeek);
+        const dateRange = `${dayStartDate}-${dayEndDate}`;
 
         const scoresResponse = await getMLBScores(dateRange);
         const teamsResponse = await getMLBTeams();
@@ -255,6 +256,21 @@ export default function MLB() {
 
     fetchMLBData();
   }, [selectedWeek]);
+
+  // Helper functions for date ranges
+  const getDayStartDate = (day: number) => {
+    const startDate = new Date(2025, 2, 28); // March 28, 2025 - 2025 MLB season
+    const dayDate = new Date(startDate);
+    dayDate.setDate(startDate.getDate() + (day - 1));
+    return dayDate.toISOString().split('T')[0].replace(/-/g, '');
+  };
+
+  const getDayEndDate = (day: number) => {
+    const startDate = new Date(2025, 2, 28); // March 28, 2025 - 2025 MLB season
+    const dayDate = new Date(startDate);
+    dayDate.setDate(startDate.getDate() + (day - 1));
+    return dayDate.toISOString().split('T')[0].replace(/-/g, '');
+  };
 
   const getDayDate = (day: number) => {
     // MLB season typically starts in March
