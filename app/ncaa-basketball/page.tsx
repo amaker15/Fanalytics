@@ -282,11 +282,8 @@ export default function NCAABasketball() {
   };
 
   const getWeekDate = (week: number) => {
-    // NCAA Basketball season typically starts in November
-    const startDate = new Date(2025, 10, 4); // November 4, 2025 - 2025 NCAA Basketball season
-    const weekDate = new Date(startDate);
-    weekDate.setDate(startDate.getDate() + (week - 1) * 7);
-    return weekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    // NCAA Basketball - show today's games since we fetch current day
+    return "Today's Games";
   };
 
   const getAIComparison = async () => {

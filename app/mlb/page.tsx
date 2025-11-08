@@ -273,11 +273,8 @@ export default function MLB() {
   };
 
   const getDayDate = (day: number) => {
-    // MLB season typically starts in March
-    const startDate = new Date(2025, 2, 28); // March 28, 2025 - 2025 MLB season
-    const dayDate = new Date(startDate);
-    dayDate.setDate(startDate.getDate() + (day - 1));
-    return dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    // MLB season - show day since we fetch games for that day range
+    return `Day ${day}`;
   };
 
   const getAIComparison = async () => {

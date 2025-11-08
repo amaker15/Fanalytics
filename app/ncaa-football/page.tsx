@@ -296,11 +296,8 @@ export default function NCAAFootball() {
   };
 
   const getWeekDate = (week: number) => {
-    // NCAA Football season typically starts in August
-    const startDate = new Date(2025, 7, 29); // August 29, 2025 - 2025 NCAA season
-    const weekDate = new Date(startDate);
-    weekDate.setDate(startDate.getDate() + (week - 1) * 7);
-    return weekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    // NCAA Football season typically starts in August - show week since we fetch multiple days
+    return `Week ${week}`;
   };
 
   const getAIComparison = async () => {

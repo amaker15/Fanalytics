@@ -415,7 +415,9 @@ export default function Home() {
     const startDate = new Date(2025, 8, 5); // September 5, 2025 (Thursday night football) - 2025 NFL season
     const weekDate = new Date(startDate);
     weekDate.setDate(startDate.getDate() + (week - 1) * 7);
-    return weekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const weekEndDate = new Date(weekDate);
+    weekEndDate.setDate(weekDate.getDate() + 6);
+    return `Week ${week}`;
   };
 
   const getAIComparison = async () => {
