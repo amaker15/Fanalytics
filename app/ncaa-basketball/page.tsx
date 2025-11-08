@@ -248,7 +248,7 @@ export default function NCAABasketball() {
 
         // Get games for today (NCAA Basketball API doesn't support date ranges)
         const today = new Date();
-        const dateRange = today.toISOString().split('T')[0];
+        const dateRange = today.toISOString().split('T')[0].replace(/-/g, '');
 
         const scoresResponse = await getNCAABasketballScores(dateRange);
         const teamsResponse = await getNCAABasketballTeams();
