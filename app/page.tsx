@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,9 +20,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Menu, Sparkles, TrendingUp } from 'lucide-react';
+import { Menu, Sparkles, TrendingUp, RefreshCw } from 'lucide-react';
 import SportsNavigation from '@/components/sports-navigation';
 import { getAISportsAnalysis } from '@/lib/nebius';
+import {
+  getNFLScores,
+  getNFLTeams,
+  getNFLNews,
+  ESPNEvent,
+  ESPNTeam,
+  formatGameStatus,
+  getGameScore,
+  getBettingOdds,
+  getGameVenue,
+  getGameBroadcast
+} from '@/lib/espn';
 
 // Sample game data
 const gamesData = {
@@ -347,7 +359,56 @@ export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  // ESPN API data state
+  const [games, setGames] = useState<ESPNEvent[]>([]);
+  const [teams, setTeams] = useState<ESPNTeam[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const weeks = Array.from({ length: 18 }, (_, i) => i + 1);
+
+  // Fetch NFL data from ESPN API
+  useEffect(() => {
+    const fetchNFLData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Get current week's games (using date range for the selected week)
+        const weekStartDate = getWeekStartDate(selectedWeek);
+        const weekEndDate = getWeekEndDate(selectedWeek);
+        const dateRange = `${weekStartDate}-${weekEndDate}`;
+
+        const scoresResponse = await getNFLScores(dateRange);
+        const teamsResponse = await getNFLTeams();
+
+        setGames(scoresResponse.events || []);
+        setTeams(teamsResponse.sports?.[0]?.leagues?.[0]?.teams || []);
+      } catch (err) {
+        console.error('Failed to fetch NFL data:', err);
+        setError('Failed to load NFL data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNFLData();
+  }, [selectedWeek]);
+
+  // Helper functions for date ranges
+  const getWeekStartDate = (week: number) => {
+    const startDate = new Date(2024, 8, 5); // September 5, 2024 (Thursday night football)
+    const weekDate = new Date(startDate);
+    weekDate.setDate(startDate.getDate() + (week - 1) * 7);
+    return weekDate.toISOString().split('T')[0].replace(/-/g, '');
+  };
+
+  const getWeekEndDate = (week: number) => {
+    const startDate = new Date(2024, 8, 5);
+    const weekDate = new Date(startDate);
+    weekDate.setDate(startDate.getDate() + (week - 1) * 7 + 6);
+    return weekDate.toISOString().split('T')[0].replace(/-/g, '');
+  };
 
   const getWeekDate = (week: number) => {
     // NFL season typically starts in September
@@ -363,14 +424,31 @@ export default function Home() {
 
     try {
       if (comparisonType === 'teams') {
-        const team1 = teamStats[firstSelection as keyof typeof teamStats];
-        const team2 = teamStats[secondSelection as keyof typeof teamStats];
+        // Find teams by name from ESPN data
+        const team1 = teams.find(t => t.displayName === firstSelection || t.name === firstSelection);
+        const team2 = teams.find(t => t.displayName === secondSelection || t.name === secondSelection);
 
         if (team1 && team2) {
-          const analysis = await getAISportsAnalysis('NFL', 'teams', firstSelection, secondSelection, team1, team2);
+          // Create stats objects from ESPN team data
+          const team1Stats = {
+            record: team1.record?.summary || '0-0',
+            rank: team1.rank || 'Unranked',
+            location: team1.location,
+            nickname: team1.nickname
+          };
+          const team2Stats = {
+            record: team2.record?.summary || '0-0',
+            rank: team2.rank || 'Unranked',
+            location: team2.location,
+            nickname: team2.nickname
+          };
+
+          const analysis = await getAISportsAnalysis('NFL', 'teams', team1.displayName, team2.displayName, team1Stats, team2Stats);
           setAiAnalysis(analysis);
         }
       } else {
+        // For players, we'll still use the hardcoded data for now
+        // TODO: Add player stats API integration
         const player1 = playerStats[firstSelection as keyof typeof playerStats];
         const player2 = playerStats[secondSelection as keyof typeof playerStats];
 
@@ -381,7 +459,7 @@ export default function Home() {
       }
     } catch (error) {
       console.error('AI Analysis failed:', error);
-      setAiAnalysis('**AI Analysis Error**\n\nUnable to generate analysis at this time. Please try again later.');
+      setAiAnalysis('AI Analysis Error\n\nUnable to generate analysis at this time. Please try again later.');
     }
 
     setIsAnalyzing(false);
@@ -471,9 +549,9 @@ export default function Home() {
                         </SelectTrigger>
                         <SelectContent>
                           {comparisonType === 'teams'
-                            ? Object.keys(teamStats).map((team) => (
-                                <SelectItem key={team} value={team}>
-                                  {team}
+                            ? teams.map((team) => (
+                                <SelectItem key={team.id} value={team.displayName}>
+                                  {team.displayName}
                                 </SelectItem>
                               ))
                             : Object.keys(playerStats).map((player) => (
@@ -496,9 +574,9 @@ export default function Home() {
                         </SelectTrigger>
                         <SelectContent>
                           {comparisonType === 'teams'
-                            ? Object.keys(teamStats).map((team) => (
-                                <SelectItem key={team} value={team}>
-                                  {team}
+                            ? teams.map((team) => (
+                                <SelectItem key={team.id} value={team.displayName}>
+                                  {team.displayName}
                                 </SelectItem>
                               ))
                             : Object.keys(playerStats).map((player) => (
@@ -582,80 +660,131 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-8">
-        {gamesData[selectedWeek as keyof typeof gamesData]?.map((section, idx) => (
-          <div key={idx} className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">{section.date}</h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              {section.games.map((game, gameIdx) => (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+            <span className="ml-2 text-zinc-400">Loading NFL games...</span>
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-400 py-12">
+            <p className="text-lg">{error}</p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="mt-4 bg-blue-600 hover:bg-blue-700"
+            >
+              Try Again
+            </Button>
+          </div>
+        ) : games.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {games.map((game) => {
+              const competition = game.competitions[0];
+              const homeTeam = competition?.competitors?.find(c => c.homeAway === 'home');
+              const awayTeam = competition?.competitors?.find(c => c.homeAway === 'away');
+              const score = getGameScore(game);
+              const odds = getBettingOdds(game);
+              const gameStatus = formatGameStatus(game);
+              const venue = getGameVenue(game);
+              const broadcast = getGameBroadcast(game);
+
+              return (
                 <div
-                  key={gameIdx}
-                  className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 hover:bg-zinc-900/70 transition-colors cursor-pointer"
+                  key={game.id}
+                  className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 hover:bg-zinc-900/70 transition-colors"
                 >
-                  <div className="flex items-center justify-between">
-                    {/* Away Team */}
+                  {/* Game Status */}
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-sm text-zinc-400">
+                      {new Date(game.date).toLocaleDateString('en-US', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </span>
+                    <span className={`text-sm px-2 py-1 rounded ${
+                      game.status.type.state === 'post'
+                        ? 'bg-green-600/20 text-green-400'
+                        : game.status.type.state === 'in'
+                        ? 'bg-red-600/20 text-red-400'
+                        : 'bg-blue-600/20 text-blue-400'
+                    }`}>
+                      {gameStatus}
+                    </span>
+                  </div>
+
+                  {/* Away Team */}
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3 flex-1">
-                      <img
-                        src={game.awayLogo}
-                        alt={game.awayTeam}
-                        className="w-8 h-8 object-contain"
-                      />
-                      <span className="font-medium">{game.awayTeam}</span>
+                      {awayTeam?.team?.logo && (
+                        <img
+                          src={awayTeam.team.logo}
+                          alt={awayTeam.team.displayName}
+                          className="w-8 h-8 object-contain"
+                        />
+                      )}
+                      <span className="font-medium">{awayTeam?.team?.displayName || awayTeam?.displayName}</span>
                     </div>
-
-                    {/* Away Spread/Total */}
-                    <div className="text-zinc-400 text-sm mx-4">
-                      {game.awaySpread || game.total}
-                    </div>
-
-                    {/* Time */}
-                    <div className="text-zinc-400 text-sm min-w-[80px] text-right">
-                      {game.time}
+                    <div className="flex items-center gap-4">
+                      {score && (
+                        <span className="text-xl font-bold">{score.away}</span>
+                      )}
+                      {odds?.awayMoneyLine && (
+                        <span className="text-sm text-zinc-400">{odds.awayMoneyLine}</span>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between mt-3">
-                    {/* Home Team */}
+                  {/* Home Team */}
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3 flex-1">
-                      <img
-                        src={game.homeLogo}
-                        alt={game.homeTeam}
-                        className="w-8 h-8 object-contain"
-                      />
-                      <span className="font-medium">{game.homeTeam}</span>
+                      {homeTeam?.team?.logo && (
+                        <img
+                          src={homeTeam.team.logo}
+                          alt={homeTeam.team.displayName}
+                          className="w-8 h-8 object-contain"
+                        />
+                      )}
+                      <span className="font-medium">{homeTeam?.team?.displayName || homeTeam?.displayName}</span>
                     </div>
-
-                    {/* Home Spread/Total */}
-                    <div className="text-zinc-400 text-sm mx-4">
-                      {game.homeSpread || game.total}
+                    <div className="flex items-center gap-4">
+                      {score && (
+                        <span className="text-xl font-bold">{score.home}</span>
+                      )}
+                      {odds?.homeMoneyLine && (
+                        <span className="text-sm text-zinc-400">{odds.homeMoneyLine}</span>
+                      )}
                     </div>
-
-                    {/* Empty space for alignment */}
-                    <div className="min-w-[80px]"></div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
 
-        {/* Bye Week */}
-        {byeWeeks[selectedWeek] && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold mb-4">Bye Week</h2>
-            <div className="flex gap-8">
-              {byeWeeks[selectedWeek].map((team) => (
-                <div key={team} className="text-zinc-400 font-medium">
-                  {team}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+                  {/* Betting Info */}
+                  {odds && (
+                    <div className="pt-3 border-t border-zinc-700">
+                      <div className="flex justify-between text-sm text-zinc-400">
+                        {odds.spread && (
+                          <span>Spread: {odds.spread}</span>
+                        )}
+                        {odds.overUnder && (
+                          <span>O/U: {odds.overUnder}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
-        {/* No games message */}
-        {!gamesData[selectedWeek as keyof typeof gamesData] && (
+                  {/* Venue & Broadcast Info */}
+                  {(venue || broadcast) && (
+                    <div className="pt-2 text-xs text-zinc-500">
+                      {venue && <div>{venue}</div>}
+                      {broadcast && <div>{broadcast}</div>}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
           <div className="text-center text-zinc-400 py-12">
             <p className="text-lg">No games scheduled for Week {selectedWeek}</p>
+            <p className="text-sm mt-2">Try selecting a different week or check back later for updated schedules.</p>
           </div>
         )}
       </main>
