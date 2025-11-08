@@ -629,13 +629,30 @@ export default function NCAABasketball() {
 
                   {/* Betting Info */}
                   {odds && (
-                    <div className="pt-3 border-t border-zinc-700">
-                      <div className="flex justify-between text-sm text-zinc-400">
+                    <div className="pt-3 border-t border-zinc-700 space-y-2">
+                      {odds.provider && (
+                        <div className="text-xs text-zinc-500 text-center">
+                          Odds by {odds.provider}
+                        </div>
+                      )}
+                      <div className="grid grid-cols-2 gap-2 text-sm">
                         {odds.spread && (
-                          <span>Spread: {odds.spread}</span>
+                          <div className="text-center">
+                            <div className="text-zinc-400">Spread</div>
+                            <div className="font-semibold">{odds.spread}</div>
+                            {odds.spreadOdds && (
+                              <div className="text-xs text-zinc-500">{odds.spreadOdds}</div>
+                            )}
+                          </div>
                         )}
                         {odds.overUnder && (
-                          <span>O/U: {odds.overUnder}</span>
+                          <div className="text-center">
+                            <div className="text-zinc-400">Total</div>
+                            <div className="font-semibold">{odds.overUnder}</div>
+                            {odds.overUnderOdds && (
+                              <div className="text-xs text-zinc-500">{odds.overUnderOdds}</div>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>

@@ -365,19 +365,27 @@ export function getGameScore(event: ESPNEvent): { home: string; away: string } |
 
 export function getBettingOdds(event: ESPNEvent): {
   spread?: string;
+  spreadOdds?: string;
   overUnder?: string;
+  overUnderOdds?: string;
   homeMoneyLine?: string;
   awayMoneyLine?: string;
+  provider?: string;
 } | null {
   const competition = event.competitions[0];
-  if (!competition?.odds) return null;
+  if (!competition?.odds || !competition.odds[0]) return null;
 
-  const odds = competition.odds;
+  const odds = competition.odds[0];
+  const moneyline = odds.moneyline;
+
   return {
-    spread: odds.spread ? `${odds.spread > 0 ? '+' : ''}${odds.spread}` : undefined,
-    overUnder: odds.overUnder ? `${odds.overUnder}` : undefined,
-    homeMoneyLine: odds.homeTeamOdds?.moneyLine ? `${odds.homeTeamOdds.moneyLine > 0 ? '+' : ''}${odds.homeTeamOdds.moneyLine}` : undefined,
-    awayMoneyLine: odds.awayTeamOdds?.moneyLine ? `${odds.awayTeamOdds.moneyLine > 0 ? '+' : ''}${odds.awayTeamOdds.moneyLine}` : undefined,
+    spread: odds.details ? odds.details : undefined,
+    spreadOdds: odds.pointSpread?.home?.close?.odds || odds.pointSpread?.away?.close?.odds || undefined,
+    overUnder: odds.overUnder ? `O/U ${odds.overUnder}` : undefined,
+    overUnderOdds: odds.total?.over?.close?.odds || odds.total?.under?.close?.odds || undefined,
+    homeMoneyLine: moneyline?.homeTeamOdds?.close?.odds ? `${moneyline.homeTeamOdds.close.odds > 0 ? '+' : ''}${moneyline.homeTeamOdds.close.odds}` : undefined,
+    awayMoneyLine: moneyline?.awayTeamOdds?.close?.odds ? `${moneyline.awayTeamOdds.close.odds > 0 ? '+' : ''}${moneyline.awayTeamOdds.close.odds}` : undefined,
+    provider: odds.provider?.name || undefined,
   };
 }
 
