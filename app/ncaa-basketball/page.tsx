@@ -246,10 +246,9 @@ export default function NCAABasketball() {
         setLoading(true);
         setError(null);
 
-        // Get games for the current week (using date range)
-        const weekStartDate = getWeekStartDate(selectedWeek);
-        const weekEndDate = getWeekEndDate(selectedWeek);
-        const dateRange = `${weekStartDate}-${weekEndDate}`;
+        // Get games for today (NCAA Basketball API doesn't support date ranges)
+        const today = new Date();
+        const dateRange = today.toISOString().split('T')[0];
 
         const scoresResponse = await getNCAABasketballScores(dateRange);
         const teamsResponse = await getNCAABasketballTeams();
@@ -265,7 +264,7 @@ export default function NCAABasketball() {
     };
 
     fetchNCAABasketballData();
-  }, [selectedWeek]);
+  }, []); // Only fetch once on component mount
 
   // Helper functions for date ranges
   const getWeekStartDate = (week: number) => {

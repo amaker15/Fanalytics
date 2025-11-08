@@ -16,17 +16,6 @@
       "static/chunks/216-5a63b5a55a9cf9ab.js",
       "static/chunks/app/layout-ceab9f33f9b78a4e.js"
     ],
-    "/mlb/page": [
-      "static/chunks/webpack-d56d4d455c9a26d0.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-cf2e1d3491ac955b.js",
-      "static/chunks/main-app-c80e2b79fd32ecc3.js",
-      "static/chunks/216-5a63b5a55a9cf9ab.js",
-      "static/chunks/839-cdf184d44a6cff8f.js",
-      "static/chunks/836-57258fed143842a4.js",
-      "static/chunks/437-f4e277880b2b5a49.js",
-      "static/chunks/app/mlb/page-06b045f0e60ad888.js"
-    ],
     "/nba/page": [
       "static/chunks/webpack-d56d4d455c9a26d0.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
@@ -36,7 +25,18 @@
       "static/chunks/839-cdf184d44a6cff8f.js",
       "static/chunks/836-57258fed143842a4.js",
       "static/chunks/437-f4e277880b2b5a49.js",
-      "static/chunks/app/nba/page-7ee9c4f4ee789623.js"
+      "static/chunks/app/nba/page-4fc1c09e6b7a0a45.js"
+    ],
+    "/mlb/page": [
+      "static/chunks/webpack-d56d4d455c9a26d0.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-cf2e1d3491ac955b.js",
+      "static/chunks/main-app-c80e2b79fd32ecc3.js",
+      "static/chunks/216-5a63b5a55a9cf9ab.js",
+      "static/chunks/839-cdf184d44a6cff8f.js",
+      "static/chunks/836-57258fed143842a4.js",
+      "static/chunks/437-f4e277880b2b5a49.js",
+      "static/chunks/app/mlb/page-bf4f2139e9ce96e2.js"
     ],
     "/ncaa-football/page": [
       "static/chunks/webpack-d56d4d455c9a26d0.js",
@@ -58,7 +58,16 @@
       "static/chunks/839-cdf184d44a6cff8f.js",
       "static/chunks/836-57258fed143842a4.js",
       "static/chunks/437-f4e277880b2b5a49.js",
-      "static/chunks/app/ncaa-basketball/page-f217eaa4714662c9.js"
+      "static/chunks/app/ncaa-basketball/page-40e4e2e34e3ca0e4.js"
+    ],
+    "/news/page": [
+      "static/chunks/webpack-d56d4d455c9a26d0.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-cf2e1d3491ac955b.js",
+      "static/chunks/main-app-c80e2b79fd32ecc3.js",
+      "static/chunks/216-5a63b5a55a9cf9ab.js",
+      "static/chunks/839-cdf184d44a6cff8f.js",
+      "static/chunks/app/news/page-ac43bf3aeeb6feb7.js"
     ],
     "/page": [
       "static/chunks/webpack-d56d4d455c9a26d0.js",
@@ -70,15 +79,6 @@
       "static/chunks/836-57258fed143842a4.js",
       "static/chunks/437-f4e277880b2b5a49.js",
       "static/chunks/app/page-f28b41410aafd053.js"
-    ],
-    "/news/page": [
-      "static/chunks/webpack-d56d4d455c9a26d0.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-cf2e1d3491ac955b.js",
-      "static/chunks/main-app-c80e2b79fd32ecc3.js",
-      "static/chunks/216-5a63b5a55a9cf9ab.js",
-      "static/chunks/839-cdf184d44a6cff8f.js",
-      "static/chunks/app/news/page-ac43bf3aeeb6feb7.js"
     ]
   }
 }
