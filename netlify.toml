@@ -1,0 +1,2 @@
+# This file is for Netlify deployment. If switching to Vercel, this file can be removed.
+# Vercel automatically detects Next.js projects and handles the build process.
