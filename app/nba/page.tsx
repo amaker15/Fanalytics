@@ -258,7 +258,7 @@ export default function NBA() {
 
   const getGameDate = (game: number) => {
     // NBA season typically starts in October
-    const startDate = new Date(2024, 9, 22); // October 22, 2024
+    const startDate = new Date(2025, 9, 22); // October 22, 2025 - 2025 NBA season
     const gameDate = new Date(startDate);
     gameDate.setDate(startDate.getDate() + (game - 1));
     return gameDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });

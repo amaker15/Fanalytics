@@ -397,14 +397,14 @@ export default function Home() {
 
   // Helper functions for date ranges
   const getWeekStartDate = (week: number) => {
-    const startDate = new Date(2024, 8, 5); // September 5, 2024 (Thursday night football)
+    const startDate = new Date(2025, 8, 5); // September 5, 2025 (Thursday night football) - 2025 NFL season
     const weekDate = new Date(startDate);
     weekDate.setDate(startDate.getDate() + (week - 1) * 7);
     return weekDate.toISOString().split('T')[0].replace(/-/g, '');
   };
 
   const getWeekEndDate = (week: number) => {
-    const startDate = new Date(2024, 8, 5);
+    const startDate = new Date(2025, 8, 5); // September 5, 2025 - 2025 NFL season
     const weekDate = new Date(startDate);
     weekDate.setDate(startDate.getDate() + (week - 1) * 7 + 6);
     return weekDate.toISOString().split('T')[0].replace(/-/g, '');
@@ -412,7 +412,7 @@ export default function Home() {
 
   const getWeekDate = (week: number) => {
     // NFL season typically starts in September
-    const startDate = new Date(2024, 8, 5); // September 5, 2024 (Thursday night football)
+    const startDate = new Date(2025, 8, 5); // September 5, 2025 (Thursday night football) - 2025 NFL season
     const weekDate = new Date(startDate);
     weekDate.setDate(startDate.getDate() + (week - 1) * 7);
     return weekDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
