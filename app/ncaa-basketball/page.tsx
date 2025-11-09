@@ -249,17 +249,6 @@ export default function NCAABasketball() {
         setLoading(true);
         setError(null);
 
-        // Fetch players (only once)
-        if (players.length === 0) {
-          try {
-            const playersData = await getAllNCAAPlayers('basketball');
-            setPlayers(playersData);
-          } catch (playerErr) {
-            console.warn('Error fetching NCAA Basketball players:', playerErr);
-            // Don't set error state for players, just continue
-          }
-        }
-
         // Get games for today (NCAA Basketball API doesn't support date ranges)
         const today = new Date();
         const dateRange = today.toISOString().split('T')[0].replace(/-/g, '');
@@ -278,7 +267,23 @@ export default function NCAABasketball() {
     };
 
     fetchNCAABasketballData();
-  }, [players.length]); // Only fetch once on component mount
+  }, []); // Only fetch once on component mount
+
+  // Fetch players only when switching to player comparison mode
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      if (comparisonType === 'players' && players.length === 0) {
+        try {
+          const playersData = await getAllNCAAPlayers('basketball');
+          setPlayers(playersData);
+        } catch (playerErr) {
+          console.warn('Error fetching NCAA Basketball players:', playerErr);
+        }
+      }
+    };
+
+    fetchPlayers();
+  }, [comparisonType, players.length]);
 
   // Helper functions for date ranges
   const getWeekStartDate = (week: number) => {
@@ -455,11 +460,17 @@ export default function NCAABasketball() {
                                   {team.displayName}
                                 </SelectItem>
                               ))
-                            : players.map((player) => (
-                                <SelectItem key={player.id} value={player.displayName}>
-                                  {player.displayName} ({player.position.abbreviation})
-                                </SelectItem>
-                              ))}
+                            : players.length > 0
+                              ? players.map((player) => (
+                                  <SelectItem key={player.id} value={player.displayName}>
+                                    {player.displayName} ({player.position.abbreviation})
+                                  </SelectItem>
+                                ))
+                              : [
+                                  <SelectItem key="loading" value="" disabled>
+                                    Loading players...
+                                  </SelectItem>
+                                ]}
                         </SelectContent>
                       </Select>
                     </div>
@@ -480,11 +491,17 @@ export default function NCAABasketball() {
                                   {team.displayName}
                                 </SelectItem>
                               ))
-                            : players.map((player) => (
-                                <SelectItem key={player.id} value={player.displayName}>
-                                  {player.displayName} ({player.position.abbreviation})
-                                </SelectItem>
-                              ))}
+                            : players.length > 0
+                              ? players.map((player) => (
+                                  <SelectItem key={player.id} value={player.displayName}>
+                                    {player.displayName} ({player.position.abbreviation})
+                                  </SelectItem>
+                                ))
+                              : [
+                                  <SelectItem key="loading" value="" disabled>
+                                    Loading players...
+                                  </SelectItem>
+                                ]}
                         </SelectContent>
                       </Select>
                     </div>
