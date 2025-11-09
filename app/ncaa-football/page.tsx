@@ -271,7 +271,9 @@ export default function NCAAFootball() {
         const teamsResponse = await getNCAAFootballTeams();
 
         setGames(scoresResponse.events || []);
-        setTeams(teamsResponse.sports?.[0]?.leagues?.[0]?.teams || []);
+        // NCAA Football API structure - teams are nested under .team property
+        const teamsData = teamsResponse.sports?.[0]?.leagues?.[0]?.teams?.map(item => item.team) || [];
+        setTeams(teamsData);
       } catch (err) {
         console.error('Failed to fetch NCAA Football data:', err);
         setError('Failed to load NCAA Football data. Please try again.');

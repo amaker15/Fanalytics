@@ -153,10 +153,14 @@ export interface ESPNTeam {
   rank?: number;
 }
 
+export interface ESPNTeamWrapper {
+  team: ESPNTeam;
+}
+
 export interface ESPNTeamsResponse {
   sports: Array<{
     leagues: Array<{
-      teams: ESPNTeam[];
+      teams: ESPNTeamWrapper[];
     }>;
   }>;
 }
@@ -584,14 +588,14 @@ export async function getAllNFLPlayers(): Promise<ESPNPlayer[]> {
 
   for (const sport of teamsResponse.sports) {
     for (const league of sport.leagues) {
-      for (const team of league.teams) {
+      for (const teamWrapper of league.teams) {
         try {
-          const roster = await getNFLTeamRoster(team.id);
+          const roster = await getNFLTeamRoster(teamWrapper.team.id);
           for (const athleteGroup of roster.athletes) {
             allPlayers.push(...athleteGroup.items);
           }
         } catch (error) {
-          console.warn(`Failed to fetch roster for team ${team.id}:`, error);
+          console.warn(`Failed to fetch roster for team ${teamWrapper.team.id}:`, error);
         }
       }
     }
@@ -606,14 +610,14 @@ export async function getAllNBAPlayers(): Promise<ESPNPlayer[]> {
 
   for (const sport of teamsResponse.sports) {
     for (const league of sport.leagues) {
-      for (const team of league.teams) {
+      for (const teamWrapper of league.teams) {
         try {
-          const roster = await getNBATeamRoster(team.id);
+          const roster = await getNBATeamRoster(teamWrapper.team.id);
           for (const athleteGroup of roster.athletes) {
             allPlayers.push(...athleteGroup.items);
           }
         } catch (error) {
-          console.warn(`Failed to fetch roster for team ${team.id}:`, error);
+          console.warn(`Failed to fetch roster for team ${teamWrapper.team.id}:`, error);
         }
       }
     }
@@ -628,14 +632,14 @@ export async function getAllNCAAPlayers(sport: 'football' | 'basketball'): Promi
 
   for (const sportData of teamsResponse.sports) {
     for (const league of sportData.leagues) {
-      for (const team of league.teams) {
+      for (const teamWrapper of league.teams) {
         try {
-          const roster = await getNCAATeamRoster(team.id, sport);
+          const roster = await getNCAATeamRoster(teamWrapper.team.id, sport);
           for (const athleteGroup of roster.athletes) {
             allPlayers.push(...athleteGroup.items);
           }
         } catch (error) {
-          console.warn(`Failed to fetch roster for team ${team.id}:`, error);
+          console.warn(`Failed to fetch roster for team ${teamWrapper.team.id}:`, error);
         }
       }
     }
@@ -650,14 +654,14 @@ export async function getAllMLBPlayers(): Promise<ESPNPlayer[]> {
 
   for (const sport of teamsResponse.sports) {
     for (const league of sport.leagues) {
-      for (const team of league.teams) {
+      for (const teamWrapper of league.teams) {
         try {
-          const roster = await getMLBTeamRoster(team.id);
+          const roster = await getMLBTeamRoster(teamWrapper.team.id);
           for (const athleteGroup of roster.athletes) {
             allPlayers.push(...athleteGroup.items);
           }
         } catch (error) {
-          console.warn(`Failed to fetch roster for team ${team.id}:`, error);
+          console.warn(`Failed to fetch roster for team ${teamWrapper.team.id}:`, error);
         }
       }
     }

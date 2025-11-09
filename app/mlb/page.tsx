@@ -248,7 +248,9 @@ export default function MLB() {
         const teamsResponse = await getMLBTeams();
 
         setGames(scoresResponse.events || []);
-        setTeams(teamsResponse.sports?.[0]?.leagues?.[0]?.teams || []);
+        // MLB API structure is different - teams are nested under .team property
+        const teamsData = teamsResponse.sports?.[0]?.leagues?.[0]?.teams?.map(item => item.team) || [];
+        setTeams(teamsData);
       } catch (err) {
         console.error('Failed to fetch MLB data:', err);
         setError('Failed to load MLB data. Please try again.');

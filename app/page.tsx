@@ -386,7 +386,9 @@ export default function Home() {
         const teamsResponse = await getNFLTeams();
 
         setGames(scoresResponse.events || []);
-        setTeams(teamsResponse.sports?.[0]?.leagues?.[0]?.teams || []);
+        // NFL API structure - teams are nested under .team property
+        const teamsData = teamsResponse.sports?.[0]?.leagues?.[0]?.teams?.map(item => item.team) || [];
+        setTeams(teamsData);
       } catch (err) {
         console.error('Failed to fetch NFL data:', err);
         setError('Failed to load NFL data. Please try again.');

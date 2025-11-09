@@ -248,7 +248,9 @@ export default function NBA() {
         const teamsResponse = await getNBATeams();
 
         setGames(scoresResponse.events || []);
-        setTeams(teamsResponse.sports?.[0]?.leagues?.[0]?.teams || []);
+        // NBA API structure - teams are nested under .team property
+        const teamsData = teamsResponse.sports?.[0]?.leagues?.[0]?.teams?.map(item => item.team) || [];
+        setTeams(teamsData);
       } catch (err) {
         console.error('Failed to fetch NBA data:', err);
         setError('Failed to load NBA data. Please try again.');
