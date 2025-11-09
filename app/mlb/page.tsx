@@ -458,7 +458,7 @@ export default function MLB() {
                                   </SelectItem>
                                 ))
                               : [
-                                  <SelectItem key="loading" value="" disabled>
+                                  <SelectItem key="loading" value="loading" disabled>
                                     Loading players...
                                   </SelectItem>
                                 ]}
@@ -489,7 +489,7 @@ export default function MLB() {
                                   </SelectItem>
                                 ))
                               : [
-                                  <SelectItem key="loading" value="" disabled>
+                                  <SelectItem key="loading" value="loading" disabled>
                                     Loading players...
                                   </SelectItem>
                                 ]}
