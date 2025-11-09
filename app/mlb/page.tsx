@@ -27,8 +27,10 @@ import {
   getMLBScores,
   getMLBTeams,
   getMLBNews,
+  getAllMLBPlayers,
   ESPNEvent,
   ESPNTeam,
+  ESPNPlayer,
   formatGameStatus,
   getGameScore,
   getBettingOdds,
@@ -224,6 +226,7 @@ export default function MLB() {
   // ESPN API data state
   const [games, setGames] = useState<ESPNEvent[]>([]);
   const [teams, setTeams] = useState<ESPNTeam[]>([]);
+  const [players, setPlayers] = useState<ESPNPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -235,6 +238,17 @@ export default function MLB() {
       try {
         setLoading(true);
         setError(null);
+
+        // Fetch players (only once, not on day change)
+        if (players.length === 0) {
+          try {
+            const playersData = await getAllMLBPlayers();
+            setPlayers(playersData);
+          } catch (playerErr) {
+            console.warn('Error fetching MLB players:', playerErr);
+            // Don't set error state for players, just continue
+          }
+        }
 
         // Get games for the selected day (using date range)
         const dayStartDate = getDayStartDate(selectedWeek);
@@ -255,7 +269,7 @@ export default function MLB() {
     };
 
     fetchMLBData();
-  }, [selectedWeek]);
+  }, [selectedWeek, players.length]);
 
   // Helper functions for date ranges
   const getDayStartDate = (day: number) => {
@@ -306,13 +320,32 @@ export default function MLB() {
           setAiAnalysis(analysis);
         }
       } else {
-        // For players, we'll still use the hardcoded data for now
-        // TODO: Add player stats API integration
-        const player1 = mlbPlayerStats[firstSelection as keyof typeof mlbPlayerStats];
-        const player2 = mlbPlayerStats[secondSelection as keyof typeof mlbPlayerStats];
+        // For players, use live ESPN data
+        const player1 = players.find(p => p.displayName === firstSelection || p.fullName === firstSelection);
+        const player2 = players.find(p => p.displayName === secondSelection || p.fullName === secondSelection);
 
         if (player1 && player2) {
-          const analysis = await getAISportsAnalysis('MLB', 'players', firstSelection, secondSelection, player1, player2);
+          // Create stats objects from ESPN player data
+          const player1Stats = {
+            position: player1.position.displayName,
+            team: 'MLB Player', // Generic since we don't have specific team from player data
+            age: player1.age,
+            height: player1.displayHeight,
+            weight: player1.displayWeight,
+            experience: player1.experience.years,
+            college: player1.college?.name || 'Unknown'
+          };
+          const player2Stats = {
+            position: player2.position.displayName,
+            team: 'MLB Player', // Generic since we don't have specific team from player data
+            age: player2.age,
+            height: player2.displayHeight,
+            weight: player2.displayWeight,
+            experience: player2.experience.years,
+            college: player2.college?.name || 'Unknown'
+          };
+
+          const analysis = await getAISportsAnalysis('MLB', 'players', player1.displayName, player2.displayName, player1Stats, player2Stats);
           setAiAnalysis(analysis);
         }
       }
@@ -413,9 +446,9 @@ export default function MLB() {
                                   {team.displayName}
                                 </SelectItem>
                               ))
-                            : Object.keys(mlbPlayerStats).map((player) => (
-                                <SelectItem key={player} value={player}>
-                                  {player}
+                            : players.map((player) => (
+                                <SelectItem key={player.id} value={player.displayName}>
+                                  {player.displayName} ({player.position.abbreviation})
                                 </SelectItem>
                               ))}
                         </SelectContent>
@@ -438,9 +471,9 @@ export default function MLB() {
                                   {team.displayName}
                                 </SelectItem>
                               ))
-                            : Object.keys(mlbPlayerStats).map((player) => (
-                                <SelectItem key={player} value={player}>
-                                  {player}
+                            : players.map((player) => (
+                                <SelectItem key={player.id} value={player.displayName}>
+                                  {player.displayName} ({player.position.abbreviation})
                                 </SelectItem>
                               ))}
                         </SelectContent>

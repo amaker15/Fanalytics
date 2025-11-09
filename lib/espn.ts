@@ -194,6 +194,108 @@ export interface ESPNRankingsResponse {
   }>;
 }
 
+export interface ESPNPlayer {
+  id: string;
+  uid: string;
+  guid: string;
+  alternateIds: {
+    sdr: string;
+  };
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  displayName: string;
+  shortName: string;
+  weight: number;
+  displayWeight: string;
+  height: number;
+  displayHeight: string;
+  age: number;
+  dateOfBirth: string;
+  debutYear?: number;
+  links: Array<{
+    language: string;
+    rel: string[];
+    href: string;
+    text: string;
+    shortText: string;
+    isExternal: boolean;
+    isPremium: boolean;
+  }>;
+  birthPlace?: {
+    city: string;
+    state: string;
+    country: string;
+  };
+  college?: {
+    id: string;
+    guid: string;
+    mascot: string;
+    name: string;
+    shortName: string;
+    abbrev: string;
+    logos: Array<{
+      href: string;
+      width: number;
+      height: number;
+      alt: string;
+      rel: string[];
+      lastUpdated: string;
+    }>;
+  };
+  slug: string;
+  headshot?: {
+    href: string;
+    alt: string;
+  };
+  jersey?: string;
+  position: {
+    id: string;
+    name: string;
+    displayName: string;
+    abbreviation: string;
+    leaf: boolean;
+    parent?: {
+      id: string;
+      name: string;
+      displayName: string;
+      abbreviation: string;
+      leaf: boolean;
+    };
+  };
+  injuries: Array<{
+    status: string;
+    date: string;
+  }>;
+  teams: Array<{
+    $ref: string;
+  }>;
+  contracts: unknown[];
+  experience: {
+    years: number;
+  };
+  status: {
+    id: string;
+    name: string;
+    type: string;
+    abbreviation: string;
+  };
+}
+
+export interface ESPNTeamRosterResponse {
+  team: ESPNTeam;
+  coach: Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    experience: number;
+  }>;
+  athletes: Array<{
+    position: string;
+    items: ESPNPlayer[];
+  }>;
+}
+
 // Generic fetch function with error handling
 async function fetchESPN(endpoint: string): Promise<unknown> {
   try {
@@ -381,6 +483,24 @@ export async function getSoccerTeams(league: string): Promise<ESPNTeamsResponse>
   return fetchESPN(`/soccer/${league}/teams`) as Promise<ESPNTeamsResponse>;
 }
 
+// Player/Roster Functions
+export async function getNFLTeamRoster(teamId: string): Promise<ESPNTeamRosterResponse> {
+  return fetchESPN(`/football/nfl/teams/${teamId}/roster`) as Promise<ESPNTeamRosterResponse>;
+}
+
+export async function getNBATeamRoster(teamId: string): Promise<ESPNTeamRosterResponse> {
+  return fetchESPN(`/basketball/nba/teams/${teamId}/roster`) as Promise<ESPNTeamRosterResponse>;
+}
+
+export async function getNCAATeamRoster(teamId: string, sport: 'football' | 'basketball'): Promise<ESPNTeamRosterResponse> {
+  const league = sport === 'football' ? 'college-football' : 'mens-college-basketball';
+  return fetchESPN(`/football/${league}/teams/${teamId}/roster`) as Promise<ESPNTeamRosterResponse>;
+}
+
+export async function getMLBTeamRoster(teamId: string): Promise<ESPNTeamRosterResponse> {
+  return fetchESPN(`/baseball/mlb/teams/${teamId}/roster`) as Promise<ESPNTeamRosterResponse>;
+}
+
 // Utility functions to format data for the app
 export function formatGameStatus(event: ESPNEvent): string {
   const status = event.status.type;
@@ -455,4 +575,93 @@ export function getGameBroadcast(event: ESPNEvent): string | null {
   const competition = event.competitions[0];
   if (!competition?.broadcasts || competition.broadcasts.length === 0) return null;
   return competition.broadcasts[0].names.join(', ');
+}
+
+// Player utility functions
+export async function getAllNFLPlayers(): Promise<ESPNPlayer[]> {
+  const teamsResponse = await getNFLTeams();
+  const allPlayers: ESPNPlayer[] = [];
+
+  for (const sport of teamsResponse.sports) {
+    for (const league of sport.leagues) {
+      for (const team of league.teams) {
+        try {
+          const roster = await getNFLTeamRoster(team.id);
+          for (const athleteGroup of roster.athletes) {
+            allPlayers.push(...athleteGroup.items);
+          }
+        } catch (error) {
+          console.warn(`Failed to fetch roster for team ${team.id}:`, error);
+        }
+      }
+    }
+  }
+
+  return allPlayers;
+}
+
+export async function getAllNBAPlayers(): Promise<ESPNPlayer[]> {
+  const teamsResponse = await getNBATeams();
+  const allPlayers: ESPNPlayer[] = [];
+
+  for (const sport of teamsResponse.sports) {
+    for (const league of sport.leagues) {
+      for (const team of league.teams) {
+        try {
+          const roster = await getNBATeamRoster(team.id);
+          for (const athleteGroup of roster.athletes) {
+            allPlayers.push(...athleteGroup.items);
+          }
+        } catch (error) {
+          console.warn(`Failed to fetch roster for team ${team.id}:`, error);
+        }
+      }
+    }
+  }
+
+  return allPlayers;
+}
+
+export async function getAllNCAAPlayers(sport: 'football' | 'basketball'): Promise<ESPNPlayer[]> {
+  const teamsResponse = sport === 'football' ? await getNCAAFootballTeams() : await getNCAABasketballTeams();
+  const allPlayers: ESPNPlayer[] = [];
+
+  for (const sportData of teamsResponse.sports) {
+    for (const league of sportData.leagues) {
+      for (const team of league.teams) {
+        try {
+          const roster = await getNCAATeamRoster(team.id, sport);
+          for (const athleteGroup of roster.athletes) {
+            allPlayers.push(...athleteGroup.items);
+          }
+        } catch (error) {
+          console.warn(`Failed to fetch roster for team ${team.id}:`, error);
+        }
+      }
+    }
+  }
+
+  return allPlayers;
+}
+
+export async function getAllMLBPlayers(): Promise<ESPNPlayer[]> {
+  const teamsResponse = await getMLBTeams();
+  const allPlayers: ESPNPlayer[] = [];
+
+  for (const sport of teamsResponse.sports) {
+    for (const league of sport.leagues) {
+      for (const team of league.teams) {
+        try {
+          const roster = await getMLBTeamRoster(team.id);
+          for (const athleteGroup of roster.athletes) {
+            allPlayers.push(...athleteGroup.items);
+          }
+        } catch (error) {
+          console.warn(`Failed to fetch roster for team ${team.id}:`, error);
+        }
+      }
+    }
+  }
+
+  return allPlayers;
 }
