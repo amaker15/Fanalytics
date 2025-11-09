@@ -84,6 +84,90 @@ type StatsRecord = Record<string, StatValue>;
 // Qwen model to use
 const QWEN_MODEL = 'Qwen/Qwen3-235B-A22B-Thinking-2507';
 
+// Test tool calling functionality
+export async function testToolCalling(): Promise<{ supported: boolean; testResult?: string; error?: string }> {
+  try {
+    console.log('Testing tool calling support...');
+
+    const toolCallingSupported = await checkToolCallingSupport();
+
+    if (!toolCallingSupported) {
+      return {
+        supported: false,
+        error: 'Tool calling not supported by Nebius API'
+      };
+    }
+
+    // Test a simple tool call
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: 'You are a sports analyst with access to ESPN data. Use the get_team_stats tool to get current information about teams.'
+      },
+      {
+        role: 'user',
+        content: 'Get stats for the Kansas City Chiefs'
+      }
+    ];
+
+    const response = await fetch(`${NEBIUS_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${NEBIUS_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: QWEN_MODEL,
+        messages,
+        temperature: 0.6,
+        top_p: 0.95,
+        max_tokens: 500,
+        tools: ESPN_TOOLS,
+        tool_choice: 'auto',
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        supported: false,
+        error: `API Error: ${response.status} - ${errorText}`
+      };
+    }
+
+    const data = await response.json();
+
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      return {
+        supported: false,
+        error: 'Invalid API response format'
+      };
+    }
+
+    const message = data.choices[0].message;
+
+    if (message.tool_calls && message.tool_calls.length > 0) {
+      console.log('Tool calling test successful - AI requested tools');
+      return {
+        supported: true,
+        testResult: `Tool calling works! AI requested ${message.tool_calls.length} tool(s): ${message.tool_calls.map((tc: ToolCall) => tc.function.name).join(', ')}`
+      };
+    } else {
+      return {
+        supported: true,
+        testResult: 'Tool calling supported but AI did not request tools in this test case'
+      };
+    }
+
+  } catch (error) {
+    console.error('Tool calling test failed:', error);
+    return {
+      supported: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
 // Check if Nebius API supports tool calling
 let supportsToolCalling: boolean | null = null;
 
@@ -550,7 +634,8 @@ export async function getAISportsAnalysis(
   selection1: string,
   selection2: string,
   stats1: StatsRecord,
-  stats2: StatsRecord
+  stats2: StatsRecord,
+  debugMode: boolean = false
 ): Promise<string> {
   try {
     // Check if tool calling is supported
@@ -573,6 +658,9 @@ Use the available tools to gather current data before providing your analysis.`
 
     if (toolCallingSupported) {
       console.log(`Using Qwen model with tool calling: ${QWEN_MODEL}`);
+      if (debugMode) {
+        console.log('Available tools:', ESPN_TOOLS.map(t => t.function.name));
+      }
     } else {
       console.log(`Using Qwen model without tool calling: ${QWEN_MODEL}`);
     }
@@ -604,30 +692,36 @@ Use the available tools to gather current data before providing your analysis.`
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Nebius API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        response: errorText
       });
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Nebius API Error:', {
-          status: response.status,
-          statusText: response.statusText,
-          response: errorText
-        });
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-      }
+    const data = await response.json();
 
-      const data = await response.json();
-
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        console.error('Invalid Nebius API response format');
-        throw new Error('Invalid API response format');
-      }
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('Invalid Nebius API response format');
+      throw new Error('Invalid API response format');
+    }
 
       const message = data.choices[0].message;
 
       // Check if the AI wants to use tools (only if tools are supported)
       if (toolCallingSupported && message.tool_calls && message.tool_calls.length > 0) {
         console.log(`AI requested ${message.tool_calls.length} tool(s)`);
+
+        if (debugMode) {
+          message.tool_calls.forEach((toolCall: ToolCall, index: number) => {
+            console.log(`Tool ${index + 1}: ${toolCall.function.name}`, JSON.parse(toolCall.function.arguments));
+          });
+        }
 
         // Add the assistant's message to conversation
         messages.push(message);
@@ -637,6 +731,10 @@ Use the available tools to gather current data before providing your analysis.`
           try {
             const toolResult = await executeTool(toolCall);
             console.log(`Tool ${toolCall.function.name} executed successfully`);
+
+            if (debugMode) {
+              console.log(`Tool result (${toolCall.function.name}):`, toolResult.substring(0, 200) + '...');
+            }
 
             // Add tool result to conversation
             messages.push({
@@ -660,6 +758,11 @@ Use the available tools to gather current data before providing your analysis.`
         // AI provided final answer
         const iterationInfo = toolCallingSupported ? ` (after ${iteration} iterations)` : '';
         console.log(`Success with Qwen model: ${QWEN_MODEL}${iterationInfo}`);
+
+        if (debugMode) {
+          console.log('Final AI response:', message.content.substring(0, 300) + '...');
+        }
+
         return message.content;
       }
     }

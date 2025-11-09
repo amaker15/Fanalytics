@@ -353,7 +353,7 @@ export default function MLB() {
             college: player2.college?.name || 'Unknown'
           };
 
-          const analysis = await getAISportsAnalysis('MLB', 'players', player1.displayName, player2.displayName, player1Stats, player2Stats);
+          const analysis = await getAISportsAnalysis('MLB', 'players', player1.displayName, player2.displayName, player1Stats, player2Stats, true); // Enable debug mode for testing
           setAiAnalysis(analysis);
         }
       }

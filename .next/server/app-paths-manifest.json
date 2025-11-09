@@ -1,9 +1,9 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/ncaa-football/page": "app/ncaa-football/page.js",
-  "/news/page": "app/news/page.js",
-  "/nba/page": "app/nba/page.js",
-  "/ncaa-basketball/page": "app/ncaa-basketball/page.js",
   "/mlb/page": "app/mlb/page.js",
-  "/page": "app/page.js"
+  "/nba/page": "app/nba/page.js",
+  "/news/page": "app/news/page.js",
+  "/ncaa-basketball/page": "app/ncaa-basketball/page.js",
+  "/page": "app/page.js",
+  "/ncaa-football/page": "app/ncaa-football/page.js"
 }
