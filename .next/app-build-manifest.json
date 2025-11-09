@@ -12,42 +12,9 @@
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
       "static/chunks/255-cf2e1d3491ac955b.js",
       "static/chunks/main-app-c80e2b79fd32ecc3.js",
-      "static/css/e26926d9f4507075.css",
+      "static/css/298ff56d20894114.css",
       "static/chunks/216-5a63b5a55a9cf9ab.js",
       "static/chunks/app/layout-ceab9f33f9b78a4e.js"
-    ],
-    "/nba/page": [
-      "static/chunks/webpack-d56d4d455c9a26d0.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-cf2e1d3491ac955b.js",
-      "static/chunks/main-app-c80e2b79fd32ecc3.js",
-      "static/chunks/216-5a63b5a55a9cf9ab.js",
-      "static/chunks/839-cdf184d44a6cff8f.js",
-      "static/chunks/836-57258fed143842a4.js",
-      "static/chunks/437-00474e992e7e0c34.js",
-      "static/chunks/app/nba/page-5952c4e2546bb15e.js"
-    ],
-    "/mlb/page": [
-      "static/chunks/webpack-d56d4d455c9a26d0.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-cf2e1d3491ac955b.js",
-      "static/chunks/main-app-c80e2b79fd32ecc3.js",
-      "static/chunks/216-5a63b5a55a9cf9ab.js",
-      "static/chunks/839-cdf184d44a6cff8f.js",
-      "static/chunks/836-57258fed143842a4.js",
-      "static/chunks/437-00474e992e7e0c34.js",
-      "static/chunks/app/mlb/page-b829e7c111f39289.js"
-    ],
-    "/ncaa-football/page": [
-      "static/chunks/webpack-d56d4d455c9a26d0.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-cf2e1d3491ac955b.js",
-      "static/chunks/main-app-c80e2b79fd32ecc3.js",
-      "static/chunks/216-5a63b5a55a9cf9ab.js",
-      "static/chunks/839-cdf184d44a6cff8f.js",
-      "static/chunks/836-57258fed143842a4.js",
-      "static/chunks/437-00474e992e7e0c34.js",
-      "static/chunks/app/ncaa-football/page-224fef51e1380206.js"
     ],
     "/ncaa-basketball/page": [
       "static/chunks/webpack-d56d4d455c9a26d0.js",
@@ -56,9 +23,42 @@
       "static/chunks/main-app-c80e2b79fd32ecc3.js",
       "static/chunks/216-5a63b5a55a9cf9ab.js",
       "static/chunks/839-cdf184d44a6cff8f.js",
-      "static/chunks/836-57258fed143842a4.js",
-      "static/chunks/437-00474e992e7e0c34.js",
-      "static/chunks/app/ncaa-basketball/page-18297fb3cd91803f.js"
+      "static/chunks/943-ce0acad7e4c3765a.js",
+      "static/chunks/608-e5bb246a89c838ef.js",
+      "static/chunks/app/ncaa-basketball/page-734d6d8d45bfdcd5.js"
+    ],
+    "/nba/page": [
+      "static/chunks/webpack-d56d4d455c9a26d0.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-cf2e1d3491ac955b.js",
+      "static/chunks/main-app-c80e2b79fd32ecc3.js",
+      "static/chunks/216-5a63b5a55a9cf9ab.js",
+      "static/chunks/839-cdf184d44a6cff8f.js",
+      "static/chunks/943-ce0acad7e4c3765a.js",
+      "static/chunks/608-e5bb246a89c838ef.js",
+      "static/chunks/app/nba/page-aca56b6b2cf66bcb.js"
+    ],
+    "/mlb/page": [
+      "static/chunks/webpack-d56d4d455c9a26d0.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-cf2e1d3491ac955b.js",
+      "static/chunks/main-app-c80e2b79fd32ecc3.js",
+      "static/chunks/216-5a63b5a55a9cf9ab.js",
+      "static/chunks/839-cdf184d44a6cff8f.js",
+      "static/chunks/943-ce0acad7e4c3765a.js",
+      "static/chunks/608-e5bb246a89c838ef.js",
+      "static/chunks/app/mlb/page-0c690b40b21f7a37.js"
+    ],
+    "/page": [
+      "static/chunks/webpack-d56d4d455c9a26d0.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-cf2e1d3491ac955b.js",
+      "static/chunks/main-app-c80e2b79fd32ecc3.js",
+      "static/chunks/216-5a63b5a55a9cf9ab.js",
+      "static/chunks/839-cdf184d44a6cff8f.js",
+      "static/chunks/943-ce0acad7e4c3765a.js",
+      "static/chunks/608-e5bb246a89c838ef.js",
+      "static/chunks/app/page-cdbe7a71078fc7f9.js"
     ],
     "/news/page": [
       "static/chunks/webpack-d56d4d455c9a26d0.js",
@@ -69,16 +69,16 @@
       "static/chunks/839-cdf184d44a6cff8f.js",
       "static/chunks/app/news/page-ac43bf3aeeb6feb7.js"
     ],
-    "/page": [
+    "/ncaa-football/page": [
       "static/chunks/webpack-d56d4d455c9a26d0.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
       "static/chunks/255-cf2e1d3491ac955b.js",
       "static/chunks/main-app-c80e2b79fd32ecc3.js",
       "static/chunks/216-5a63b5a55a9cf9ab.js",
       "static/chunks/839-cdf184d44a6cff8f.js",
-      "static/chunks/836-57258fed143842a4.js",
-      "static/chunks/437-00474e992e7e0c34.js",
-      "static/chunks/app/page-b9ef36e8bf3e8d89.js"
+      "static/chunks/943-ce0acad7e4c3765a.js",
+      "static/chunks/608-e5bb246a89c838ef.js",
+      "static/chunks/app/ncaa-football/page-d981ec74dea1874c.js"
     ]
   }
 }

@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import { Menu, Sparkles, TrendingUp, RefreshCw } from 'lucide-react';
 import SportsNavigation from '@/components/sports-navigation';
 import { getAISportsAnalysis } from '@/lib/nebius';
@@ -442,30 +443,37 @@ export default function MLB() {
                       <label className="text-sm font-medium mb-2 block">
                         First {comparisonType === 'teams' ? 'Team' : 'Player'}
                       </label>
-                      <Select value={firstSelection} onValueChange={setFirstSelection}>
-                        <SelectTrigger>
-                          <SelectValue placeholder={`Select ${comparisonType === 'teams' ? 'team' : 'player'}`} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {comparisonType === 'teams'
-                            ? teams.map((team) => (
-                                <SelectItem key={team.id} value={team.displayName}>
-                                  {team.displayName}
-                                </SelectItem>
-                              ))
-                            : players.length > 0
-                              ? players.map((player) => (
-                                  <SelectItem key={player.id} value={player.displayName}>
-                                    {player.displayName} ({player.position.abbreviation})
-                                  </SelectItem>
-                                ))
-                              : [
-                                  <SelectItem key="loading" value="loading" disabled>
-                                    Loading players...
-                                  </SelectItem>
-                                ]}
-                        </SelectContent>
-                      </Select>
+                      {comparisonType === 'teams' ? (
+                        <Select value={firstSelection} onValueChange={setFirstSelection}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select team" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {teams.map((team) => (
+                              <SelectItem key={team.id} value={team.displayName}>
+                                {team.displayName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Combobox
+                          options={
+                            players.length > 0
+                              ? players.map((player) => ({
+                                  value: player.displayName,
+                                  label: player.displayName,
+                                  position: player.position.abbreviation,
+                                }))
+                              : [{ value: "loading", label: "Loading players..." }]
+                          }
+                          value={firstSelection}
+                          onValueChange={setFirstSelection}
+                          placeholder="Select player"
+                          searchPlaceholder="Search players..."
+                          emptyMessage="No players found."
+                        />
+                      )}
                     </div>
 
                     {/* Second Selection */}
@@ -473,30 +481,37 @@ export default function MLB() {
                       <label className="text-sm font-medium mb-2 block">
                         Second {comparisonType === 'teams' ? 'Team' : 'Player'}
                       </label>
-                      <Select value={secondSelection} onValueChange={setSecondSelection}>
-                        <SelectTrigger>
-                          <SelectValue placeholder={`Select ${comparisonType === 'teams' ? 'team' : 'player'}`} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {comparisonType === 'teams'
-                            ? teams.map((team) => (
-                                <SelectItem key={team.id} value={team.displayName}>
-                                  {team.displayName}
-                                </SelectItem>
-                              ))
-                            : players.length > 0
-                              ? players.map((player) => (
-                                  <SelectItem key={player.id} value={player.displayName}>
-                                    {player.displayName} ({player.position.abbreviation})
-                                  </SelectItem>
-                                ))
-                              : [
-                                  <SelectItem key="loading" value="loading" disabled>
-                                    Loading players...
-                                  </SelectItem>
-                                ]}
-                        </SelectContent>
-                      </Select>
+                      {comparisonType === 'teams' ? (
+                        <Select value={secondSelection} onValueChange={setSecondSelection}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select team" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {teams.map((team) => (
+                              <SelectItem key={team.id} value={team.displayName}>
+                                {team.displayName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Combobox
+                          options={
+                            players.length > 0
+                              ? players.map((player) => ({
+                                  value: player.displayName,
+                                  label: player.displayName,
+                                  position: player.position.abbreviation,
+                                }))
+                              : [{ value: "loading", label: "Loading players..." }]
+                          }
+                          value={secondSelection}
+                          onValueChange={setSecondSelection}
+                          placeholder="Select player"
+                          searchPlaceholder="Search players..."
+                          emptyMessage="No players found."
+                        />
+                      )}
                     </div>
 
                     {/* Compare Button */}

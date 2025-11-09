@@ -1,9 +1,9 @@
 {
   "/_not-found/page": "/_not-found",
+  "/ncaa-basketball/page": "/ncaa-basketball",
   "/nba/page": "/nba",
   "/mlb/page": "/mlb",
-  "/ncaa-football/page": "/ncaa-football",
-  "/ncaa-basketball/page": "/ncaa-basketball",
+  "/page": "/",
   "/news/page": "/news",
-  "/page": "/"
+  "/ncaa-football/page": "/ncaa-football"
 }
