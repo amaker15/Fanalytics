@@ -84,6 +84,63 @@ type StatsRecord = Record<string, StatValue>;
 // Qwen model to use
 const QWEN_MODEL = 'Qwen/Qwen3-235B-A22B-Thinking-2507';
 
+// Baseball-Reference and Basketball-Reference scraping tools
+async function getBaseballReferenceStats(year: number, statType: string = 'batting'): Promise<string> {
+  try {
+    // Call the Next.js API route that runs the Python scraper
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/sports-reference`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        sport: 'baseball',
+        year,
+        statType
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data || 'No data available';
+  } catch (error) {
+    console.error('Error fetching Baseball-Reference data:', error);
+    return `Failed to retrieve Baseball-Reference data: ${error instanceof Error ? error.message : 'Unknown error'}`;
+  }
+}
+
+async function getBasketballReferenceStats(year: number, statType: string = 'per_game'): Promise<string> {
+  try {
+    // Call the Next.js API route that runs the Python scraper
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/sports-reference`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        sport: 'basketball',
+        year,
+        statType
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data || 'No data available';
+  } catch (error) {
+    console.error('Error fetching Basketball-Reference data:', error);
+    return `Failed to retrieve Basketball-Reference data: ${error instanceof Error ? error.message : 'Unknown error'}`;
+  }
+}
+
 // Test tool calling functionality
 export async function testToolCalling(): Promise<{ supported: boolean; testResult?: string; error?: string }> {
   try {
@@ -311,13 +368,59 @@ const ESPN_TOOLS: ToolDefinition[] = [
         required: ['sport', 'league']
       }
     }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_baseball_reference_stats',
+      description: 'Get historical baseball statistics from Baseball-Reference.com',
+      parameters: {
+        type: 'object',
+        properties: {
+          year: {
+            type: 'number',
+            description: 'The season year (e.g., 2023, 2024)'
+          },
+          stat_type: {
+            type: 'string',
+            enum: ['batting', 'pitching', 'fielding'],
+            description: 'Type of statistics to retrieve',
+            default: 'batting'
+          }
+        },
+        required: ['year']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_basketball_reference_stats',
+      description: 'Get historical basketball statistics from Basketball-Reference.com',
+      parameters: {
+        type: 'object',
+        properties: {
+          year: {
+            type: 'number',
+            description: 'The season year (e.g., 2023, 2024)'
+          },
+          stat_type: {
+            type: 'string',
+            enum: ['per_game', 'totals', 'advanced', 'standings'],
+            description: 'Type of statistics to retrieve',
+            default: 'per_game'
+          }
+        },
+        required: ['year']
+      }
+    }
   }
 ];
 
 // Tool execution functions
 async function executeTool(toolCall: ToolCall): Promise<string> {
   const { name, arguments: args } = toolCall.function;
-  const params = JSON.parse(args) as { sport?: string; league?: string; team_name?: string; player_name?: string; limit?: number };
+  const params = JSON.parse(args) as { sport?: string; league?: string; team_name?: string; player_name?: string; limit?: number; year?: number; stat_type?: string };
 
   try {
     switch (name) {
@@ -329,6 +432,10 @@ async function executeTool(toolCall: ToolCall): Promise<string> {
         return await getRecentGames(params.sport!, params.league!, params.team_name, params.limit || 5);
       case 'get_league_standings':
         return await getLeagueStandings(params.sport!, params.league!);
+      case 'get_baseball_reference_stats':
+        return await getBaseballReferenceStats(params.year!, params.stat_type || 'batting');
+      case 'get_basketball_reference_stats':
+        return await getBasketballReferenceStats(params.year!, params.stat_type || 'per_game');
       default:
         return `Unknown tool: ${name}`;
     }
@@ -642,11 +749,11 @@ export async function getAISportsAnalysis(
     const toolCallingSupported = await checkToolCallingSupport();
 
     const systemPrompt = toolCallingSupported
-      ? `You are a professional sports analyst providing expert analysis for ${sport}. You have access to current ESPN data through tools. When analyzing teams or players, use the available tools to get up-to-date statistics, recent performance, and league standings to provide the most accurate analysis.
+      ? `You are a professional sports analyst providing expert analysis for ${sport}. You have access to current ESPN data and historical Baseball-Reference/Basketball-Reference statistics through tools. When analyzing teams or players, use the available tools to get up-to-date statistics, recent performance, league standings, and historical context to provide the most accurate analysis.
 
 Compare the two ${type} provided and give detailed insights about their performance, strengths, weaknesses, and prediction for a matchup. Keep the analysis concise but informative, around 200-300 words. Use plain text only - no markdown, no bold, no special formatting, no asterisks. Structure your response with clear section labels like "Performance Comparison:", "Key Strengths:", "Critical Weaknesses:", and "Prediction:".
 
-Use the available tools to gather current data before providing your analysis.`
+Use the available tools to gather current data and historical context before providing your analysis. For baseball analysis, you can access historical batting/pitching/fielding stats. For basketball analysis, you can access historical per-game, totals, advanced stats, and standings.`
       : `You are a professional sports analyst providing expert analysis for ${sport}. Compare the two ${type} provided and give detailed insights about their performance, strengths, weaknesses, and prediction for a matchup. Keep the analysis concise but informative, around 200-300 words. Use plain text only - no markdown, no bold, no special formatting, no asterisks. Structure your response with clear section labels like "Performance Comparison:", "Key Strengths:", "Critical Weaknesses:", and "Prediction:".`;
 
     const userPrompt = generateComparisonPrompt(sport, type, selection1, selection2, stats1, stats2);
