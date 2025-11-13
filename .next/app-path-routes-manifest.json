@@ -1,10 +1,10 @@
 {
   "/api/sports-reference/route": "/api/sports-reference",
   "/_not-found/page": "/_not-found",
-  "/nba/page": "/nba",
   "/ncaa-basketball/page": "/ncaa-basketball",
-  "/news/page": "/news",
-  "/ncaa-football/page": "/ncaa-football",
   "/mlb/page": "/mlb",
-  "/page": "/"
+  "/nba/page": "/nba",
+  "/page": "/",
+  "/news/page": "/news",
+  "/ncaa-football/page": "/ncaa-football"
 }
