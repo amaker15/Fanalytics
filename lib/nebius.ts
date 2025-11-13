@@ -1,14 +1,14 @@
-// Grok API integration for AI-powered sports analysis
+// Nebius API integration for AI-powered sports analysis
 
-const GROK_API_KEY = process.env.GROK_API_KEY!;
-const GROK_BASE_URL = process.env.GROK_BASE_URL!;
+const NEBIUS_API_KEY = process.env.NEBIUS_API_KEY!;
+const NEBIUS_BASE_URL = process.env.NEBIUS_BASE_URL!;
 
-// Test function to check Grok API connectivity
-export async function testGrokConnection(): Promise<boolean> {
+// Test function to check Nebius API connectivity
+export async function testNebiusConnection(): Promise<boolean> {
   try {
-    const response = await fetch(`${GROK_BASE_URL}/models`, {
+    const response = await fetch(`${NEBIUS_BASE_URL}/models`, {
       headers: {
-        'Authorization': `Bearer ${GROK_API_KEY}`,
+        'Authorization': `Bearer ${NEBIUS_API_KEY}`,
       },
     });
 
@@ -81,8 +81,8 @@ interface ModelsResponse {
 type StatValue = string | number | undefined;
 type StatsRecord = Record<string, StatValue>;
 
-// Grok model to use
-const GROK_MODEL = 'grok-beta';
+// Qwen model to use
+const QWEN_MODEL = 'Qwen/Qwen3-235B-A22B-Thinking-2507';
 
 // Baseball-Reference and Basketball-Reference scraping tools
 async function getBaseballReferenceStats(year: number, statType: string = 'batting'): Promise<string> {
@@ -167,14 +167,14 @@ export async function testToolCalling(): Promise<{ supported: boolean; testResul
       }
     ];
 
-    const response = await fetch(`${GROK_BASE_URL}/chat/completions`, {
+    const response = await fetch(`${NEBIUS_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GROK_API_KEY}`,
+        'Authorization': `Bearer ${NEBIUS_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: GROK_MODEL,
+        model: QWEN_MODEL,
         messages,
         temperature: 0.6,
         top_p: 0.95,
@@ -234,14 +234,14 @@ async function checkToolCallingSupport(): Promise<boolean> {
   }
 
   try {
-    const response = await fetch(`${GROK_BASE_URL}/chat/completions`, {
+    const response = await fetch(`${NEBIUS_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GROK_API_KEY}`,
+        'Authorization': `Bearer ${NEBIUS_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: GROK_MODEL,
+        model: QWEN_MODEL,
         messages: [{ role: 'user', content: 'Test' }],
         tools: [],
         max_tokens: 1
@@ -753,9 +753,7 @@ export async function getAISportsAnalysis(
 
 Compare the two ${type} provided and give detailed insights about their performance, strengths, weaknesses, and prediction for a matchup. Keep the analysis concise but informative, around 200-300 words. Use plain text only - no markdown, no bold, no special formatting, no asterisks. Structure your response with clear section labels like "Performance Comparison:", "Key Strengths:", "Critical Weaknesses:", and "Prediction:".
 
-Use the available tools to gather current data and historical context before providing your analysis. For baseball analysis, you can access historical batting/pitching/fielding stats. For basketball analysis, you can access historical per-game, totals, advanced stats, and standings.
-
-You are Grok, a helpful and maximally truthful AI built by xAI, providing expert sports analysis.`
+Use the available tools to gather current data and historical context before providing your analysis. For baseball analysis, you can access historical batting/pitching/fielding stats. For basketball analysis, you can access historical per-game, totals, advanced stats, and standings.`
       : `You are a professional sports analyst providing expert analysis for ${sport}. Compare the two ${type} provided and give detailed insights about their performance, strengths, weaknesses, and prediction for a matchup. Keep the analysis concise but informative, around 200-300 words. Use plain text only - no markdown, no bold, no special formatting, no asterisks. Structure your response with clear section labels like "Performance Comparison:", "Key Strengths:", "Critical Weaknesses:", and "Prediction:".`;
 
     const userPrompt = generateComparisonPrompt(sport, type, selection1, selection2, stats1, stats2);
@@ -766,12 +764,12 @@ You are Grok, a helpful and maximally truthful AI built by xAI, providing expert
     ];
 
     if (toolCallingSupported) {
-      console.log(`Using Grok model with tool calling: ${GROK_MODEL}`);
+      console.log(`Using Qwen model with tool calling: ${QWEN_MODEL}`);
       if (debugMode) {
         console.log('Available tools:', ESPN_TOOLS.map(t => t.function.name));
       }
     } else {
-      console.log(`Using Grok model without tool calling: ${GROK_MODEL}`);
+      console.log(`Using Qwen model without tool calling: ${QWEN_MODEL}`);
     }
 
     const maxIterations = toolCallingSupported ? 5 : 1; // Only 1 iteration if no tools
@@ -781,7 +779,7 @@ You are Grok, a helpful and maximally truthful AI built by xAI, providing expert
       iteration++;
 
       const requestBody: Record<string, unknown> = {
-        model: GROK_MODEL,
+        model: QWEN_MODEL,
         messages,
         temperature: 0.6,
         top_p: 0.95,
@@ -794,10 +792,10 @@ You are Grok, a helpful and maximally truthful AI built by xAI, providing expert
         requestBody.tool_choice = iteration === 1 ? 'auto' : 'none';
       }
 
-      const response = await fetch(`${GROK_BASE_URL}/chat/completions`, {
+      const response = await fetch(`${NEBIUS_BASE_URL}/chat/completions`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${GROK_API_KEY}`,
+          'Authorization': `Bearer ${NEBIUS_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
@@ -866,7 +864,7 @@ You are Grok, a helpful and maximally truthful AI built by xAI, providing expert
       } else {
         // AI provided final answer
         const iterationInfo = toolCallingSupported ? ` (after ${iteration} iterations)` : '';
-        console.log(`Success with Grok model: ${GROK_MODEL}${iterationInfo}`);
+        console.log(`Success with Qwen model: ${QWEN_MODEL}${iterationInfo}`);
 
         if (debugMode) {
           console.log('Final AI response:', message.content.substring(0, 300) + '...');
