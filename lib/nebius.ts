@@ -1,7 +1,7 @@
 // Nebius API integration for AI-powered sports analysis
 
-const NEBIUS_API_KEY = 'v1.CmQKHHN0YXRpY2tleS1lMDB4NTgxZnk1Z2phejU0cGMSIXNlcnZpY2VhY2NvdW50LWUwMGgzbXhudGpzbWo5NjVwNTIMCJiDs8gGEKr4l80COgwIl4bLkwcQwPe3iANAAloDZTAw.AAAAAAAAAAHfj9qOAVhhg9NtkSOOFCTlM7q1qAm8J1EtpY006UA629hnxlCPc_4Iu9ApUKs_BGuso6sZ_grpk2hochdo738J';
-const NEBIUS_BASE_URL = 'https://api.tokenfactory.nebius.com/v1';
+const NEBIUS_API_KEY = process.env.NEBIUS_API_KEY!;
+const NEBIUS_BASE_URL = process.env.NEBIUS_BASE_URL!;
 
 // Test function to check Nebius API connectivity
 export async function testNebiusConnection(): Promise<boolean> {
