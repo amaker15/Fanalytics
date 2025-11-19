@@ -16,13 +16,13 @@ import {
 } from '@/components/ui/dialog';
 import { Menu, TrendingUp, Clock, User, ExternalLink, Sparkles, RefreshCw } from 'lucide-react';
 import SportsNavigation from '@/components/sports-navigation';
-import { 
-  getNFLNews, 
-  getNBANews, 
-  getNCAAFootballNews, 
-  getNCAABasketballNews, 
+import {
+  getNFLNews,
+  getNBANews,
+  getNCAAFootballNews,
+  getNCAABasketballNews,
   getMLBNews,
-  ESPNNewsItem 
+  ESPNNewsItem
 } from '@/lib/espn';
 
 const categories = ['All', 'NFL', 'NBA', 'NCAA Football', 'NCAA Basketball', 'MLB'];
@@ -52,7 +52,7 @@ export default function News() {
           ]);
 
           // Tag articles with their source category for display
-          const tagArticles = (items: ESPNNewsItem[], category: string) => 
+          const tagArticles = (items: ESPNNewsItem[], category: string) =>
             items.map(item => ({ ...item, _category: category }));
 
           newsItems = [
@@ -121,7 +121,7 @@ export default function News() {
   };
 
   // Helper to get category (either from our tag or infer it)
-  const getArticleCategory = (article: any) => {
+  const getArticleCategory = (article: ESPNNewsItem & { _category?: string }) => {
     return article._category || selectedCategory;
   };
 
@@ -196,11 +196,10 @@ export default function News() {
                   setSelectedCategory(category);
                   setSelectedArticle(null);
                 }}
-                className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                  selectedCategory === category
+                className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${selectedCategory === category
                     ? 'text-white border-b-2 border-purple-600'
                     : 'text-zinc-400 hover:text-white'
-                }`}
+                  }`}
               >
                 {category}
               </button>
@@ -220,8 +219,8 @@ export default function News() {
         ) : error ? (
           <div className="text-center text-red-400 py-12">
             <p className="text-lg">{error}</p>
-            <Button 
-              onClick={() => window.location.reload()} 
+            <Button
+              onClick={() => window.location.reload()}
               className="mt-4 bg-purple-600 hover:bg-purple-700"
             >
               Try Again
@@ -264,7 +263,7 @@ export default function News() {
                 <p className="text-xl text-zinc-300 leading-relaxed mb-6">
                   {selectedArticle.description}
                 </p>
-                
+
                 <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 mt-8">
                   <h3 className="text-lg font-semibold mb-2">Read Full Article</h3>
                   <p className="text-zinc-400 mb-4">
