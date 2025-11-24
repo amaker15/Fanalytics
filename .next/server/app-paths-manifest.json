@@ -5,6 +5,6 @@
   "/ncaa-football/page": "app/ncaa-football/page.js",
   "/ncaa-basketball/page": "app/ncaa-basketball/page.js",
   "/page": "app/page.js",
-  "/news/page": "app/news/page.js",
-  "/mlb/page": "app/mlb/page.js"
+  "/mlb/page": "app/mlb/page.js",
+  "/news/page": "app/news/page.js"
 }
