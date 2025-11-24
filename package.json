@@ -1,14 +1,3 @@
-/*
- * Fanalytics - Package Configuration
- *
- * This file defines the dependencies, scripts, and metadata for the
- * Fanalytics sports analytics application built with Next.js.
- *
- * @author Fanalytics Team
- * @created November 24, 2025
- * @license MIT
- */
-
 {
     "name": "nextjs-shadcn",
     "version": "0.1.0",
