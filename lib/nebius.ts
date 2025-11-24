@@ -1,4 +1,13 @@
-// Nebius API integration for AI-powered sports analysis
+/*
+ * Fanalytics - Nebius AI Integration Library
+ *
+ * This library provides functions to interact with Nebius AI for
+ * generating sports analysis, team comparisons, and player insights.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
 
 const NEBIUS_API_KEY = process.env.NEBIUS_API_KEY!;
 const NEBIUS_BASE_URL = process.env.NEBIUS_BASE_URL!;

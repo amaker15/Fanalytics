@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Combobox UI Component
+ *
+ * A searchable dropdown component used for player and team selection
+ * in the AI comparison features of the application.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 "use client"
 
 import * as React from "react"

@@ -1,3 +1,14 @@
+#
+# Fanalytics - Sports Analytics with AI
+#
+# A comprehensive sports analytics application built with Next.js, featuring AI-powered
+# analysis using Qwen AI with access to live ESPN data and historical sports statistics.
+#
+# @author Fanalytics Team
+# @created November 24, 2025
+# @license MIT
+#
+
 # Fanalytics - Sports Analytics with AI
 
 A comprehensive sports analytics application built with Next.js, featuring AI-powered analysis using Qwen AI with access to live ESPN data and historical Baseball-Reference/Basketball-Reference statistics.

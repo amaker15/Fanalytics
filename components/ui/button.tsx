@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Button UI Component
+ *
+ * A reusable button component built with Radix UI primitives and
+ * class-variance-authority for consistent styling across the application.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"

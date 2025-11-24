@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
-"""
-Sports Reference Data Scraper for Fanalytics
-
-This script scrapes Baseball-Reference.com and Basketball-Reference.com
-and formats the data for feeding into Qwen AI analysis.
-
-Installation:
-pip install requests beautifulsoup4 pandas lxml pybaseball
-
-Usage:
-python scrape_sports_refs.py --sport baseball --year 2023 --stat-type batting
-python scrape_sports_refs.py --sport basketball --year 2023 --stat-type per_game
-"""
+#
+# Fanalytics - Sports Reference Data Scraper
+#
+# This script scrapes Baseball-Reference.com and Basketball-Reference.com
+# and formats the data for feeding into Qwen AI analysis.
+#
+# Installation:
+# pip install requests beautifulsoup4 pandas lxml pybaseball
+#
+# Usage:
+# python scrape_sports_refs.py --sport baseball --year 2023 --stat-type batting
+# python scrape_sports_refs.py --sport basketball --year 2023 --stat-type per_game
+#
+# @author Fanalytics Team
+# @created November 24, 2025
+# @license MIT
+#
 
 import requests
 from bs4 import BeautifulSoup

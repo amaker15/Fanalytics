@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Tailwind CSS Configuration
+ *
+ * This file configures Tailwind CSS for the Fanalytics application,
+ * including custom themes, animations, and component styles.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 import type { Config } from "tailwindcss";
 
 export default {

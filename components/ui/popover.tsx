@@ -1,5 +1,16 @@
 "use client"
 
+/*
+ * Fanalytics - Popover UI Component
+ *
+ * A popover component built with Radix UI primitives,
+ * used for dropdown menus and contextual information displays.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 import * as React from "react"
 import * as PopoverPrimitive from "@radix-ui/react-popover"
 

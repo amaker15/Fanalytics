@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - TypeScript Configuration
+ *
+ * This file configures TypeScript compilation options for the Fanalytics project,
+ * including module resolution, JSX settings, and path aliases.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 {
     "compilerOptions": {
       "target": "ES2017",

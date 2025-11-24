@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Scroll Area UI Component
+ *
+ * A custom scrollable area component built with Radix UI primitives,
+ * used for the week selector and other scrollable content areas.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 import * as React from "react"
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 

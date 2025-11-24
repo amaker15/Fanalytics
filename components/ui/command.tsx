@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Command UI Component
+ *
+ * A command palette component built on cmdk, used for searchable
+ * interfaces within the application's dropdown and selection components.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 "use client"
 
 import * as React from "react"

@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Badge UI Component
+ *
+ * A reusable badge component for displaying status indicators,
+ * tags, and labels throughout the application.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 

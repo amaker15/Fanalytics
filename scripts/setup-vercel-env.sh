@@ -1,7 +1,15 @@
 #!/bin/bash
 
-# Script to set up Vercel environment variables for Fanalytics
+#
+# Fanalytics - Vercel Environment Setup Script
+#
+# This script sets up Vercel environment variables for the Fanalytics application.
 # Run this from the project root: ./scripts/setup-vercel-env.sh
+#
+# @author Fanalytics Team
+# @created November 24, 2025
+# @license MIT
+#
 
 echo "Setting up Vercel environment variables for Fanalytics..."
 echo ""

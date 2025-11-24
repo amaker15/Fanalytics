@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Biome Configuration
+ *
+ * This file configures Biome (linter and formatter) for the Fanalytics project,
+ * including code style rules, formatting options, and file inclusion patterns.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 {
     "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
     "vcs": {

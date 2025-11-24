@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - ESLint Configuration
+ *
+ * This file configures ESLint rules and settings for the Fanalytics project,
+ * including Next.js specific rules and TypeScript integration.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";

@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Main NFL Scores Page
+ *
+ * This file contains the main page component for the NFL section of Fanalytics,
+ * displaying live game scores, team comparisons, and AI-powered analytics.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';

@@ -1,4 +1,13 @@
-// ESPN API integration for live sports data, scores, betting odds, and news
+/*
+ * Fanalytics - ESPN API Integration Library
+ *
+ * This library provides functions to fetch live sports data, scores,
+ * betting odds, and news from ESPN APIs for all supported sports.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
 
 const ESPN_BASE_URL = 'https://site.api.espn.com/apis/site/v2/sports';
 

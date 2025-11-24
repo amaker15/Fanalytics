@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Shadcn/UI Components Configuration
+ *
+ * This file configures Shadcn/UI components for the Fanalytics application,
+ * including style preferences, aliases, and component settings.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 {
     "$schema": "https://ui.shadcn.com/schema.json",
     "style": "new-york",

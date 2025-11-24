@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - NCAA Basketball Scores Page
+ *
+ * This file contains the NCAA Basketball section page component for Fanalytics,
+ * displaying college basketball game scores and team analytics.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';

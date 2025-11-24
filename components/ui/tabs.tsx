@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Tabs UI Component
+ *
+ * A tabbed interface component built with Radix UI primitives,
+ * used for navigation between different views and sections.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 

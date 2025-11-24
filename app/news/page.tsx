@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Sports News Page
+ *
+ * This file contains the news section page component for Fanalytics,
+ * displaying latest sports news articles and updates from ESPN.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';

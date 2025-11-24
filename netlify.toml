@@ -1,2 +1,13 @@
+#
+# Fanalytics - Netlify Deployment Configuration
+#
+# This file configures Netlify deployment settings for the Fanalytics application.
+# If switching to Vercel, this file can be removed as Vercel auto-detects Next.js projects.
+#
+# @author Fanalytics Team
+# @created November 24, 2025
+# @license MIT
+#
+
 # This file is for Netlify deployment. If switching to Vercel, this file can be removed.
 # Vercel automatically detects Next.js projects and handles the build process.

@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Sports Reference API Route
+ *
+ * This API route handles requests for historical sports data from
+ * Baseball-Reference and Basketball-Reference using Python scraping scripts.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import path from 'path';

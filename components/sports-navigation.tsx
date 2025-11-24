@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Sports Navigation Component
+ *
+ * This component provides navigation links between different sports
+ * sections (NFL, NBA, NCAA Basketball, NCAA Football, MLB) in the application.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 'use client';
 
 import Link from 'next/link';

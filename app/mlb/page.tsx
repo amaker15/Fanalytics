@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - MLB Scores Page
+ *
+ * This file contains the MLB section page component for Fanalytics,
+ * displaying MLB game scores, standings, and team analytics.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';

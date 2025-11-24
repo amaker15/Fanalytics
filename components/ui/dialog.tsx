@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Dialog UI Component
+ *
+ * A modal dialog component built with Radix UI primitives,
+ * used for the AI comparison interface and other modal interactions.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"

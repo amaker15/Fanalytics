@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - NBA Scores Page
+ *
+ * This file contains the NBA section page component for Fanalytics,
+ * displaying NBA game scores, standings, and player analytics.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';

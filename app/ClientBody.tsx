@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Client Body Wrapper Component
+ *
+ * This component wraps the application body and ensures consistent
+ * styling by setting dark mode classes during client-side hydration.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 "use client";
 
 import { useEffect } from "react";

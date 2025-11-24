@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Select UI Component
+ *
+ * A select dropdown component built with Radix UI primitives,
+ * used for team and week selection throughout the application.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"

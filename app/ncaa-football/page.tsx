@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - NCAA Football Scores Page
+ *
+ * This file contains the NCAA Football section page component for Fanalytics,
+ * displaying college football game scores and team analytics.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';

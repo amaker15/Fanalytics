@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Next.js Configuration
+ *
+ * This file contains the Next.js configuration for the Fanalytics application,
+ * including image domains, development origins, and build settings.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     allowedDevOrigins: ["*.preview.same-app.com"],

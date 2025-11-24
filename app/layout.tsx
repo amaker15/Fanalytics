@@ -1,3 +1,14 @@
+/*
+ * Fanalytics - Root Layout Component
+ *
+ * This file defines the root layout for the Fanalytics application,
+ * including global fonts, metadata, and client-side body wrapper.
+ *
+ * @author Fanalytics Team
+ * @created November 24, 2025
+ * @license MIT
+ */
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
