@@ -25,8 +25,18 @@ computeFantasyFromNFL,
 } from "./espn-data";
 import { getOdds, formatOdds } from "./odds";
 
+const NEBIUS_API_KEY =
+  "v1.CmQKHHN0YXRpY2tleS1lMDBrcjJmc3I2amVjdDk5NWMSIXNlcnZpY2VhY2NvdW50LWUwMGFqejNtcWEyNjBudnJ4bTIMCIXJkskGEN7PhK0BOgwIhMyqlAcQwPS23wJAAloDZTAw.AAAAAAAAAAEh9hZKh9DwuPBRsU8tPlOWEipcg6hbXiOxpv1M7qH-EPArxhsU6qYAJGirNLkd2yOeaqcxZYRW1lQyxdiTeqUI";
+const NEBIUS_BASE_URL = "https://api.tokenfactory.nebius.com/v1/";
+const NEBIUS_MODEL = "openai/gpt-oss-120b";
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? NEBIUS_API_KEY;
+const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL ?? NEBIUS_BASE_URL;
+const CHAT_MODEL = process.env.OPENAI_MODEL ?? NEBIUS_MODEL;
+
 const client = new OpenAI({
-apiKey: process.env.OPENAI_API_KEY!,
+  apiKey: OPENAI_API_KEY,
+  baseURL: OPENAI_BASE_URL,
 });
 
 /* ============================================================
@@ -235,7 +245,7 @@ const globalDateHint = extractYYYYMMDD(query);
 
 // First pass: let the model decide which tool to call
 const resp = await client.chat.completions.create({
-model: "gpt-4o",
+model: CHAT_MODEL,
 messages,
 tools,
 tool_choice: "auto",
@@ -583,7 +593,7 @@ content: JSON.stringify(toolResult),
 
 // Second pass: turn toolResult into a natural-language answer
 const final = await client.chat.completions.create({
-model: "gpt-4o",
+model: CHAT_MODEL,
 messages,
 });
 

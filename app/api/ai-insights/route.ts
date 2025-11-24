@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { runWorkflow } from '@/lib/agentSports';
+import { runChat } from '@/lib/chatbot';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,19 +23,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use the AI agent workflow
-    const result = await runWorkflow({ input_as_text: query });
-
-    if (!result.output_text) {
-      return NextResponse.json(
-        { ok: false, error: 'No response generated' },
-        { status: 500 }
-      );
-    }
+    // Use the Nebius-backed chat workflow
+    const answer = await runChat(query);
 
     return NextResponse.json({
       ok: true,
-      answer: result.output_text,
+      answer,
     });
 
   } catch (error) {
