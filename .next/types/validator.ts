@@ -47,6 +47,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 }
 
 
+// Validate ../../app/ai-insights/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/ai-insights">> = Specific
+  const handler = {} as typeof import("../../app/ai-insights/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/mlb/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/mlb">> = Specific
@@ -96,6 +105,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends AppPageConfig<"/">> = Specific
   const handler = {} as typeof import("../../app/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/ai-insights/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/ai-insights">> = Specific
+  const handler = {} as typeof import("../../app/api/ai-insights/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

@@ -1,10 +1,12 @@
 {
-  "/api/sports-reference/route": "/api/sports-reference",
+  "/api/ai-insights/route": "/api/ai-insights",
   "/_not-found/page": "/_not-found",
+  "/api/sports-reference/route": "/api/sports-reference",
+  "/ai-insights/page": "/ai-insights",
+  "/ncaa-basketball/page": "/ncaa-basketball",
+  "/news/page": "/news",
   "/nba/page": "/nba",
   "/ncaa-football/page": "/ncaa-football",
-  "/ncaa-basketball/page": "/ncaa-basketball",
   "/page": "/",
-  "/mlb/page": "/mlb",
-  "/news/page": "/news"
+  "/mlb/page": "/mlb"
 }

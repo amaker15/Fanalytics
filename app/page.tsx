@@ -14,6 +14,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
@@ -24,6 +25,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -32,7 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Combobox } from '@/components/ui/combobox';
-import { Menu, Sparkles, TrendingUp, RefreshCw } from 'lucide-react';
+import { Menu, Sparkles, TrendingUp, RefreshCw, Send, Bot, Loader2 } from 'lucide-react';
 import SportsNavigation from '@/components/sports-navigation';
 import { getAISportsAnalysis } from '@/lib/nebius';
 import {
@@ -364,14 +367,21 @@ const playerStats = {
   },
 };
 
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
+
 export default function Home() {
   const [selectedWeek, setSelectedWeek] = useState(9);
-  const [comparisonType, setComparisonType] = useState<'teams' | 'players'>('teams');
-  const [firstSelection, setFirstSelection] = useState('');
-  const [secondSelection, setSecondSelection] = useState('');
-  const [aiAnalysis, setAiAnalysis] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // AI Insights Chat state
+  const [query, setQuery] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
 
   // ESPN API data state
   const [games, setGames] = useState<ESPNEvent[]>([]);
@@ -412,21 +422,56 @@ export default function Home() {
     fetchNFLData();
   }, [selectedWeek]);
 
-  // Fetch players only when switching to player comparison mode
-  useEffect(() => {
-    const fetchPlayers = async () => {
-      if (comparisonType === 'players' && players.length === 0) {
-        try {
-          const playersData = await getAllNFLPlayers();
-          setPlayers(playersData);
-        } catch (playerErr) {
-          console.warn('Error fetching NFL players:', playerErr);
-        }
-      }
+  // AI Insights Chat handlers
+  const handleChatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim() || isLoadingChat) return;
+
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: query,
+      timestamp: new Date(),
     };
 
-    fetchPlayers();
-  }, [comparisonType, players.length]);
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoadingChat(true);
+    setQuery('');
+
+    try {
+      const response = await fetch('/api/ai-insights', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: userMessage.content }),
+      });
+
+      const data = await response.json();
+
+      if (data.ok) {
+        const assistantMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.answer,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+      } else {
+        throw new Error(data.error || 'Failed to get AI response');
+      }
+    } catch (error) {
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoadingChat(false);
+    }
+  };
 
   // Helper functions for date ranges
   const getWeekStartDate = (week: number) => {
@@ -453,71 +498,6 @@ export default function Home() {
     return `Week ${week}`;
   };
 
-  const getAIComparison = async () => {
-    setIsAnalyzing(true);
-    setAiAnalysis('');
-
-    try {
-      if (comparisonType === 'teams') {
-        // Find teams by name from ESPN data
-        const team1 = teams.find(t => t.displayName === firstSelection || t.name === firstSelection);
-        const team2 = teams.find(t => t.displayName === secondSelection || t.name === secondSelection);
-
-        if (team1 && team2) {
-          // Create stats objects from ESPN team data
-          const team1Stats = {
-            record: team1.record?.summary || '0-0',
-            rank: team1.rank || 'Unranked',
-            location: team1.location,
-            nickname: team1.nickname
-          };
-          const team2Stats = {
-            record: team2.record?.summary || '0-0',
-            rank: team2.rank || 'Unranked',
-            location: team2.location,
-            nickname: team2.nickname
-          };
-
-          const analysis = await getAISportsAnalysis('NFL', 'teams', team1.displayName, team2.displayName, team1Stats, team2Stats);
-          setAiAnalysis(analysis);
-        }
-      } else {
-        // For players, use live ESPN data
-        const player1 = players.find(p => p.displayName === firstSelection || p.fullName === firstSelection);
-        const player2 = players.find(p => p.displayName === secondSelection || p.fullName === secondSelection);
-
-        if (player1 && player2) {
-          // Create stats objects from ESPN player data
-          const player1Stats = {
-            position: player1.position.displayName,
-            team: 'NFL Player', // Generic since we don't have specific team from player data
-            age: player1.age,
-            height: player1.displayHeight,
-            weight: player1.displayWeight,
-            experience: player1.experience.years,
-            college: player1.college?.name || 'Unknown'
-          };
-          const player2Stats = {
-            position: player2.position.displayName,
-            team: 'NFL Player', // Generic since we don't have specific team from player data
-            age: player2.age,
-            height: player2.displayHeight,
-            weight: player2.displayWeight,
-            experience: player2.experience.years,
-            college: player2.college?.name || 'Unknown'
-          };
-
-          const analysis = await getAISportsAnalysis('NFL', 'players', player1.displayName, player2.displayName, player1Stats, player2Stats);
-          setAiAnalysis(analysis);
-        }
-      }
-    } catch (error) {
-      console.error('AI Analysis failed:', error);
-      setAiAnalysis('AI Analysis Error\n\nUnable to generate analysis at this time. Please try again later.');
-    }
-
-    setIsAnalyzing(false);
-  };
 
   return (
     <div className="min-h-screen bg-[#0b0b0e] text-white">
@@ -559,155 +539,115 @@ export default function Home() {
                 <DialogTrigger asChild>
                   <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
                     <Sparkles className="h-4 w-4 mr-2" />
-                    AI Compare
+                    AI Insights
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto bg-zinc-900 border-zinc-800">
+                <DialogContent className="sm:max-w-[700px] max-h-[80vh] bg-zinc-900 border-zinc-800">
                   <DialogHeader>
                     <DialogTitle className="text-2xl flex items-center gap-2">
-                      <Sparkles className="h-6 w-6 text-blue-500" />
-                      AI-Powered Comparison
+                      <Bot className="h-6 w-6 text-blue-500" />
+                      AI Insights
                     </DialogTitle>
                     <DialogDescription className="text-zinc-400">
-                      Compare teams or players using advanced analytics and AI insights
+                      Ask me anything about sports! I can provide live scores, player stats, betting odds, and analysis.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-6 py-4">
-                    {/* Comparison Type */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Comparison Type</label>
-                      <Tabs
-                        value={comparisonType}
-                        onValueChange={(v) => {
-                          setComparisonType(v as 'teams' | 'players');
-                          setFirstSelection('');
-                          setSecondSelection('');
-                          setAiAnalysis('');
-                        }}
-                      >
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="teams">Teams</TabsTrigger>
-                          <TabsTrigger value="players">Players</TabsTrigger>
-                        </TabsList>
-                      </Tabs>
-                    </div>
-
-                    {/* First Selection */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">
-                        First {comparisonType === 'teams' ? 'Team' : 'Player'}
-                      </label>
-                      {comparisonType === 'teams' ? (
-                        <Select value={firstSelection} onValueChange={setFirstSelection}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select team" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {teams.map((team) => (
-                              <SelectItem key={team.id} value={team.displayName}>
-                                {team.displayName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Combobox
-                          options={
-                            players.length > 0
-                              ? players.map((player) => ({
-                                  value: player.displayName,
-                                  label: player.displayName,
-                                  position: player.position.abbreviation,
-                                }))
-                              : [{ value: "loading", label: "Loading players..." }]
-                          }
-                          value={firstSelection}
-                          onValueChange={setFirstSelection}
-                          placeholder="Select player"
-                          searchPlaceholder="Search players..."
-                          emptyMessage="No players found."
-                        />
-                      )}
-                    </div>
-
-                    {/* Second Selection */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">
-                        Second {comparisonType === 'teams' ? 'Team' : 'Player'}
-                      </label>
-                      {comparisonType === 'teams' ? (
-                        <Select value={secondSelection} onValueChange={setSecondSelection}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select team" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {teams.map((team) => (
-                              <SelectItem key={team.id} value={team.displayName}>
-                                {team.displayName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Combobox
-                          options={
-                            players.length > 0
-                              ? players.map((player) => ({
-                                  value: player.displayName,
-                                  label: player.displayName,
-                                  position: player.position.abbreviation,
-                                }))
-                              : [{ value: "loading", label: "Loading players..." }]
-                          }
-                          value={secondSelection}
-                          onValueChange={setSecondSelection}
-                          placeholder="Select player"
-                          searchPlaceholder="Search players..."
-                          emptyMessage="No players found."
-                        />
-                      )}
-                    </div>
-
-                    {/* Compare Button */}
-                    <Button
-                      onClick={getAIComparison}
-                      disabled={!firstSelection || !secondSelection || isAnalyzing}
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    >
-                      {isAnalyzing ? (
-                        <>
-                          <Sparkles className="h-4 w-4 mr-2 animate-spin" />
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Generate AI Analysis
-                        </>
-                      )}
-                    </Button>
-
-                    {/* AI Analysis Result */}
-                    {aiAnalysis && (
-                      <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700">
-                        <div className="prose prose-invert max-w-none">
-                          {aiAnalysis.split('\n').map((line, i) => {
-                            if (line.startsWith('**') && line.endsWith('**')) {
-                              return (
-                                <h4 key={i} className="text-blue-400 font-semibold mt-3 mb-2">
-                                  {line.replace(/\*\*/g, '')}
-                                </h4>
-                              );
-                            }
-                            return line ? (
-                              <p key={i} className="text-zinc-300 text-sm mb-2">
-                                {line}
-                              </p>
-                            ) : null;
-                          })}
-                        </div>
+                  
+                  <div className="space-y-4 py-4">
+                    {/* Messages Area */}
+                    <ScrollArea className="h-[400px] w-full pr-4">
+                      <div className="space-y-4">
+                        {messages.length === 0 ? (
+                          <div className="text-center text-zinc-500 py-8">
+                            <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                            <p className="mb-2">Start a conversation about sports!</p>
+                            <p className="text-sm">Try asking:</p>
+                            <div className="mt-4 space-y-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setQuery("Show me today's NFL scores")}
+                                className="text-xs text-zinc-300 hover:text-white hover:bg-zinc-800 w-full"
+                              >
+                                Show me today&apos;s NFL scores
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setQuery("Compare Patrick Mahomes and Lamar Jackson")}
+                                className="text-xs text-zinc-300 hover:text-white hover:bg-zinc-800 w-full"
+                              >
+                                Compare Patrick Mahomes and Lamar Jackson
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setQuery("Get betting odds for today's games")}
+                                className="text-xs text-zinc-300 hover:text-white hover:bg-zinc-800 w-full"
+                              >
+                                Get betting odds for today&apos;s games
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          messages.map((message) => (
+                            <div
+                              key={message.id}
+                              className={`flex ${
+                                message.role === 'user' ? 'justify-end' : 'justify-start'
+                              }`}
+                            >
+                              <div
+                                className={`max-w-[85%] rounded-lg px-4 py-2 ${
+                                  message.role === 'user'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-zinc-800 text-zinc-200'
+                                }`}
+                              >
+                                <div className="whitespace-pre-wrap text-sm">
+                                  {message.content}
+                                </div>
+                                <div className="text-xs opacity-70 mt-1">
+                                  {message.timestamp.toLocaleTimeString()}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                        {isLoadingChat && (
+                          <div className="flex justify-start">
+                            <div className="bg-zinc-800 text-zinc-200 rounded-lg px-4 py-2 max-w-[85%]">
+                              <div className="flex items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span className="text-sm">Thinking...</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </ScrollArea>
+
+                    {/* Input Form */}
+                    <form onSubmit={handleChatSubmit} className="flex gap-2">
+                      <Input
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Ask about sports scores, player stats, betting odds..."
+                        className="flex-1 bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500"
+                        disabled={isLoadingChat}
+                      />
+                      <Button
+                        type="submit"
+                        disabled={isLoadingChat || !query.trim()}
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      >
+                        {isLoadingChat ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </form>
                   </div>
                 </DialogContent>
               </Dialog>

@@ -21,7 +21,6 @@ const sports = [
   { name: 'NCAA BB', path: '/ncaa-basketball', color: 'text-green-500' },
   { name: 'NCAA FB', path: '/ncaa-football', color: 'text-red-500' },
   { name: 'MLB', path: '/mlb', color: 'text-blue-600' },
-  { name: 'AI Insights', path: '/ai-insights', color: 'text-purple-500' },
 ];
 
 export default function SportsNavigation() {
