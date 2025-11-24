@@ -46,6 +46,56 @@ Uses scoreboard (today) or summary?event={id} (specific)
 type RouterInput = { queryText: string };
 type SportKey = "nfl" | "mcb" | "nba" | "mlb" | "nhl";
 
+// TypeScript interfaces for ESPN API responses
+interface ESPNCompetitor {
+  id: string;
+  homeAway: string;
+  score?: string;
+  team?: {
+    id: string;
+    displayName: string;
+    shortDisplayName: string;
+    name: string;
+    nickname: string;
+    location: string;
+    abbreviation: string;
+  };
+}
+
+interface ESPNCompetition {
+  id: string;
+  competitors: ESPNCompetitor[];
+  status?: {
+    type: {
+      shortDetail: string;
+      description: string;
+    };
+  };
+}
+
+interface ESPNSummary {
+  header?: {
+    competitions?: ESPNCompetition[];
+  };
+  leaders?: any[];
+  gamePackageJSON?: {
+    leaders?: any[];
+    boxscore?: any;
+  };
+}
+
+interface ESPNScoreboard {
+  events?: Array<{
+    id: string;
+    competitions?: ESPNCompetition[];
+  }>;
+}
+
+interface ESPNBoxScore {
+  players?: any[];
+  teams?: any[];
+}
+
 const ESPN_ENDPOINTS: Record<SportKey, { scoreboard: string; summary: string }> = {
 nfl: {
 scoreboard:
@@ -158,13 +208,15 @@ return `${year}${month}${day}`;
 return null;
 }
 
-async function httpGetJSON(url: string) {
-const res = await fetch(url, { headers: { "User-Agent": "sportsbot/1.0 (educational)" } as any });
+async function httpGetJSON(url: string): Promise<unknown> {
+const res = await fetch(url, {
+  headers: { "User-Agent": "sportsbot/1.0 (educational)" }
+});
 if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
 return res.json();
 }
 
-function pickBestGameByTeams(scoreboard: any, queryLC: string): { gameId: string | null; matchScore: number } {
+function pickBestGameByTeams(scoreboard: ESPNScoreboard, queryLC: string): { gameId: string | null; matchScore: number } {
 let best = { gameId: null as string | null, matchScore: 0 };
 const events = scoreboard?.events ?? [];
 for (const ev of events) {
@@ -173,11 +225,13 @@ const comp = ev?.competitions?.[0];
 const competitors = comp?.competitors ?? [];
 const tokens: string[] = [];
 for (const c of competitors) {
-const t = c?.team ?? {};
-const names = [t?.displayName, t?.shortDisplayName, t?.name, t?.nickname, t?.location, t?.abbrev]
+const t = c?.team;
+if (t) {
+const names = [t.displayName, t.shortDisplayName, t.name, t.nickname, t.location, t.abbreviation]
 .filter(Boolean)
 .map((s: string) => s.toLowerCase());
 tokens.push(...names);
+}
 }
 let score = 0;
 for (const token of tokens) if (token && queryLC.includes(token)) score += token.length;
@@ -188,7 +242,7 @@ return best;
 
 type SimpleLeader = { label: string; name: string; value: string; team?: string };
 
-function extractLeaders(summary: any, sport: SportKey): SimpleLeader[] {
+function extractLeaders(summary: ESPNSummary, sport: SportKey): SimpleLeader[] {
 const out: SimpleLeader[] = [];
 const leaders = summary?.leaders || summary?.gamePackageJSON?.leaders;
 if (Array.isArray(leaders) && leaders.length) {
@@ -251,7 +305,7 @@ return out;
 return out;
 }
 
-function findTopLineInBox(box: any, categoryLabelLC: string): { name: string; value: string; team?: string } | null {
+function findTopLineInBox(box: ESPNBoxScore, categoryLabelLC: string): { name: string; value: string; team?: string } | null {
 const teams = box?.players || box?.teams || [];
 for (const side of teams) {
 const teamName = side?.team?.abbreviation || side?.team?.displayName || side?.team?.shortDisplayName;
@@ -274,7 +328,7 @@ if (nmLC && num) return { name: nmLC, value: num, team: teamName };
 return null;
 }
 
-function formatScoreLineFromSummary(summary: any): { line: string; status: string } {
+function formatScoreLineFromSummary(summary: ESPNSummary): { line: string; status: string } {
 const headerComp = summary?.header?.competitions?.[0];
 const status =
 headerComp?.status?.type?.shortDetail ||
@@ -282,8 +336,8 @@ headerComp?.status?.type?.description ||
 "In progress";
 
 const comps = headerComp?.competitors || [];
-const home = comps.find((c: any) => c?.homeAway === "home") || comps[0];
-const away = comps.find((c: any) => c?.homeAway === "away") || comps[1];
+const home = comps.find((c: ESPNCompetitor) => c?.homeAway === "home") || comps[0];
+const away = comps.find((c: ESPNCompetitor) => c?.homeAway === "away") || comps[1];
 
 const homeName = home?.team?.shortDisplayName || home?.team?.abbreviation || home?.team?.displayName || "HOME";
 const awayName = away?.team?.shortDisplayName || away?.team?.abbreviation || away?.team?.displayName || "AWAY";
@@ -294,15 +348,15 @@ const line = `${homeName} ${homeScore} — ${awayName} ${awayScore} (${status})`
 return { line, status };
 }
 
-function formatScoreboardLines(board: any, max = 6): string[] {
+function formatScoreboardLines(board: ESPNScoreboard, max = 6): string[] {
 const events = board?.events ?? [];
 const lines: string[] = [];
 for (const ev of events.slice(0, max)) {
 const comp = ev?.competitions?.[0];
 const comps = comp?.competitors || [];
 const status = comp?.status?.type?.shortDetail || comp?.status?.type?.description || "Scheduled";
-const home = comps.find((c: any) => c?.homeAway === "home") || comps[0];
-const away = comps.find((c: any) => c?.homeAway === "away") || comps[1];
+const home = comps.find((c: ESPNCompetitor) => c?.homeAway === "home") || comps[0];
+const away = comps.find((c: ESPNCompetitor) => c?.homeAway === "away") || comps[1];
 const homeName = home?.team?.abbreviation || home?.team?.shortDisplayName || home?.team?.displayName || "HOME";
 const awayName = away?.team?.abbreviation || away?.team?.shortDisplayName || away?.team?.displayName || "AWAY";
 const line = `${homeName} ${home?.score ?? 0} — ${awayName} ${away?.score ?? 0} (${status})`;
@@ -346,7 +400,7 @@ const dateParam = extractEspnDate(queryText); // Use explicit date if provided
 try {
 if (explicitId) {
 const sumUrl = endpoints.summary + explicitId;
-const data = await httpGetJSON(sumUrl);
+const data = await httpGetJSON(sumUrl) as ESPNSummary;
 const leaders = extractLeaders(data, sport);
 const pretty = formatScoreLineFromSummary(data);
 return JSON.stringify({
@@ -369,7 +423,7 @@ if (dateParam && !wantToday) {
 scoreboardUrl = `${endpoints.scoreboard}?dates=${dateParam}`;
 }
 
-const board = await httpGetJSON(scoreboardUrl);
+const board = await httpGetJSON(scoreboardUrl) as ESPNScoreboard;
 
 if (wantToday && !dateParam) {
 const lines = formatScoreboardLines(board);
@@ -388,7 +442,7 @@ raw: board,
 const pick = pickBestGameByTeams(board, qLC);
 if (pick.gameId && pick.matchScore > 0) {
 const sumUrl = endpoints.summary + pick.gameId;
-const data = await httpGetJSON(sumUrl);
+const data = await httpGetJSON(sumUrl) as ESPNSummary;
 const leaders = extractLeaders(data, sport);
 const pretty = formatScoreLineFromSummary(data);
 return JSON.stringify({
@@ -419,11 +473,11 @@ note: dateParam
 ? "No clear team match; returning that date's scoreboard."
 : "No clear team match; returning today's scoreboard.",
 });
-} catch (err: any) {
+} catch (err: unknown) {
 return JSON.stringify({
 ok: false,
 provider: "ESPN (unofficial)",
-error: err.message || String(err),
+error: err instanceof Error ? err.message : String(err),
 });
 }
 },

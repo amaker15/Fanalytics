@@ -34,7 +34,28 @@ if (!res.ok) throw new Error(`${res.statusText}`);
 return res.json();
 }
 
-export function formatOdds(data: any) {
+interface OddsOutcome {
+  name: string;
+  point?: number;
+  price: string;
+}
+
+interface OddsMarket {
+  key: string;
+  outcomes: OddsOutcome[];
+}
+
+interface OddsBookmaker {
+  markets: OddsMarket[];
+}
+
+interface OddsGame {
+  home_team: string;
+  away_team: string;
+  bookmakers: OddsBookmaker[];
+}
+
+export function formatOdds(data: OddsGame[]) {
 const lines: string[] = [];
 if (!Array.isArray(data) || data.length === 0) {
 return "No odds available right now.";
@@ -44,10 +65,10 @@ for (const g of data.slice(0, 5)) {
 const home = g.home_team;
 const away = g.away_team;
 const book = g.bookmakers?.[0];
-const h2h = book?.markets?.find((m: any) => m.key === "h2h");
-const totals = book?.markets?.find((m: any) => m.key === "totals");
-const spreads = book?.markets?.find((m: any) => m.key === "spreads");
-const homeML = h2h?.outcomes?.find((o: any) => o.name === home)?.price ?? "";
+const h2h = book?.markets?.find((m: OddsMarket) => m.key === "h2h");
+const totals = book?.markets?.find((m: OddsMarket) => m.key === "totals");
+const spreads = book?.markets?.find((m: OddsMarket) => m.key === "spreads");
+const homeML = h2h?.outcomes?.find((o: OddsOutcome) => o.name === home)?.price ?? "";
 const awayML = h2h?.outcomes?.find((o: any) => o.name === away)?.price ?? "";
 const totalLine = totals?.outcomes
 ?.map((o: any) => `${o.name} ${o.point ?? ""} (${o.price})`)

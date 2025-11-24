@@ -573,12 +573,12 @@ toolResult = { ok: false, note: `Failed to fetch odds: ${error.message}` };
 }
 
 // Add tool call and tool result into the conversation
-messages.push(firstMessage as any);
+messages.push(firstMessage);
 messages.push({
 role: "tool",
 tool_call_id: call.id,
 content: JSON.stringify(toolResult),
-} as any);
+});
 
 // Second pass: turn toolResult into a natural-language answer
 const final = await client.chat.completions.create({
