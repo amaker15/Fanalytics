@@ -33,12 +33,6 @@
       "namedRegex": "^/_not\\-found(?:/)?$"
     },
     {
-      "page": "/ai-insights",
-      "regex": "^/ai\\-insights(?:/)?$",
-      "routeKeys": {},
-      "namedRegex": "^/ai\\-insights(?:/)?$"
-    },
-    {
       "page": "/mlb",
       "regex": "^/mlb(?:/)?$",
       "routeKeys": {},
