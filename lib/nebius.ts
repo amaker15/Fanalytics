@@ -9,8 +9,41 @@
  * @license MIT
  */
 
+import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// ============================================================================
+// AI PROVIDER CONFIGURATION
+// ============================================================================
+// Choose your AI provider by changing this value:
+// Available options: 'nebius', 'anthropic', 'google', 'openai'
+//
+// PRICING & FEATURES COMPARISON:
+// - Nebius (Qwen): ~$0.001/1K tokens, tool calling, good for analysis
+// - Anthropic Claude: ~$0.003/1K input, $0.015/1K output, excellent reasoning
+// - Google Gemini: ~$0.0005/1K input, $0.0015/1K output, fast & multimodal
+// - OpenAI GPT-4: ~$0.03/1K input, $0.06/1K output, industry standard
+//
+// REQUIRED ENVIRONMENT VARIABLES:
+// - NEBIUS: NEBIUS_API_KEY, NEBIUS_BASE_URL
+// - ANTHROPIC: ANTHROPIC_API_KEY
+// - GOOGLE: GOOGLE_API_KEY
+// - OPENAI: OPENAI_API_KEY
+//
+// To switch providers:
+// 1. Set the required environment variables
+// 2. Change AI_PROVIDER below
+// 3. Restart your development server
+// ============================================================================
+const AI_PROVIDER: 'nebius' | 'anthropic' | 'google' | 'openai' = 'nebius'; // Current active provider
+
+// Provider-specific configurations
 const NEBIUS_API_KEY = process.env.NEBIUS_API_KEY!;
 const NEBIUS_BASE_URL = process.env.NEBIUS_BASE_URL!;
+
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY!;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
 
 // Test function to check Nebius API connectivity
 export async function testNebiusConnection(): Promise<boolean> {
@@ -744,6 +777,255 @@ async function getLeagueStandings(sport: string, league: string): Promise<string
   }
 }
 
+// ============================================================================
+// MULTI-PROVIDER AI IMPLEMENTATIONS
+// ============================================================================
+
+// Anthropic Claude implementation
+async function getAnthropicAnalysis(
+  sport: string,
+  type: 'teams' | 'players',
+  selection1: string,
+  selection2: string,
+  stats1: StatsRecord,
+  stats2: StatsRecord,
+  debugMode: boolean = false
+): Promise<string> {
+  const anthropic = new Anthropic({
+    apiKey: ANTHROPIC_API_KEY,
+  });
+
+  const systemPrompt = `You are a professional sports analyst providing expert analysis for ${sport}. Compare the two ${type} provided and give detailed insights about their performance, strengths, weaknesses, and prediction for a matchup. Keep the analysis concise but informative, around 200-300 words. Use plain text only - no markdown, no bold, no special formatting, no asterisks. Structure your response with clear section labels like "Performance Comparison:", "Key Strengths:", "Critical Weaknesses:", and "Prediction:".`;
+
+  const userPrompt = generateComparisonPrompt(sport, type, selection1, selection2, stats1, stats2);
+
+  const message = await anthropic.messages.create({
+    model: 'claude-3-sonnet-20240229',
+    max_tokens: 1000,
+    system: systemPrompt,
+    messages: [
+      {
+        role: 'user',
+        content: userPrompt
+      }
+    ]
+  });
+
+  return message.content[0].type === 'text' ? message.content[0].text : 'Error: Unexpected response format';
+}
+
+// Google Gemini implementation
+async function getGoogleAnalysis(
+  sport: string,
+  type: 'teams' | 'players',
+  selection1: string,
+  selection2: string,
+  stats1: StatsRecord,
+  stats2: StatsRecord,
+  debugMode: boolean = false
+): Promise<string> {
+  const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
+  const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+
+  const systemPrompt = `You are a professional sports analyst providing expert analysis for ${sport}. Compare the two ${type} provided and give detailed insights about their performance, strengths, weaknesses, and prediction for a matchup. Keep the analysis concise but informative, around 200-300 words. Use plain text only - no markdown, no bold, no special formatting, no asterisks. Structure your response with clear section labels like "Performance Comparison:", "Key Strengths:", "Critical Weaknesses:", and "Prediction:".`;
+
+  const userPrompt = generateComparisonPrompt(sport, type, selection1, selection2, stats1, stats2);
+
+  const result = await model.generateContent(`${systemPrompt}\n\n${userPrompt}`);
+  const response = await result.response;
+  return response.text();
+}
+
+// OpenAI GPT-4 implementation
+async function getOpenAIAnalysis(
+  sport: string,
+  type: 'teams' | 'players',
+  selection1: string,
+  selection2: string,
+  stats1: StatsRecord,
+  stats2: StatsRecord,
+  debugMode: boolean = false
+): Promise<string> {
+  const systemPrompt = `You are a professional sports analyst providing expert analysis for ${sport}. Compare the two ${type} provided and give detailed insights about their performance, strengths, weaknesses, and prediction for a matchup. Keep the analysis concise but informative, around 200-300 words. Use plain text only - no markdown, no bold, no special formatting, no asterisks. Structure your response with clear section labels like "Performance Comparison:", "Key Strengths:", "Critical Weaknesses:", and "Prediction:".`;
+
+  const userPrompt = generateComparisonPrompt(sport, type, selection1, selection2, stats1, stats2);
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt
+        },
+        {
+          role: 'user',
+          content: userPrompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000,
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`OpenAI API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+// Nebius (Qwen) implementation - original code moved here
+async function getNebiusAnalysis(
+  sport: string,
+  type: 'teams' | 'players',
+  selection1: string,
+  selection2: string,
+  stats1: StatsRecord,
+  stats2: StatsRecord,
+  debugMode: boolean = false
+): Promise<string> {
+  // Check if tool calling is supported
+  const toolCallingSupported = await checkToolCallingSupport();
+
+  const systemPrompt = toolCallingSupported
+    ? `You are a professional sports analyst providing expert analysis for ${sport}. You have access to current ESPN data and historical Baseball-Reference/Basketball-Reference statistics through tools. When analyzing teams or players, use the available tools to get up-to-date statistics, recent performance, league standings, and historical context to provide the most accurate analysis.
+
+Compare the two ${type} provided and give detailed insights about their performance, strengths, weaknesses, and prediction for a matchup. Keep the analysis concise but informative, around 200-300 words. Use plain text only - no markdown, no bold, no special formatting, no asterisks. Structure your response with clear section labels like "Performance Comparison:", "Key Strengths:", "Critical Weaknesses:", and "Prediction:".
+
+Use the available tools to gather current data and historical context before providing your analysis. For baseball analysis, you can access historical batting/pitching/fielding stats. For basketball analysis, you can access historical per-game, totals, advanced stats, and standings.`
+    : `You are a professional sports analyst providing expert analysis for ${sport}. Compare the two ${type} provided and give detailed insights about their performance, strengths, weaknesses, and prediction for a matchup. Keep the analysis concise but informative, around 200-300 words. Use plain text only - no markdown, no bold, no special formatting, no asterisks. Structure your response with clear section labels like "Performance Comparison:", "Key Strengths:", "Critical Weaknesses:", and "Prediction:".`;
+
+  const userPrompt = generateComparisonPrompt(sport, type, selection1, selection2, stats1, stats2);
+
+  const messages: ChatMessage[] = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt }
+  ];
+
+  if (toolCallingSupported) {
+    console.log(`Using Qwen model with tool calling: ${QWEN_MODEL}`);
+    if (debugMode) {
+      console.log('Available tools:', ESPN_TOOLS.map(t => t.function.name));
+    }
+  } else {
+    console.log(`Using Qwen model without tool calling: ${QWEN_MODEL}`);
+  }
+
+  const maxIterations = toolCallingSupported ? 5 : 1; // Only 1 iteration if no tools
+  let iteration = 0;
+
+  while (iteration < maxIterations) {
+    iteration++;
+
+    const requestBody: Record<string, unknown> = {
+      model: QWEN_MODEL,
+      messages,
+      temperature: 0.6,
+      top_p: 0.95,
+      max_tokens: 800,
+    };
+
+    // Only add tools if supported
+    if (toolCallingSupported) {
+      requestBody.tools = ESPN_TOOLS;
+      requestBody.tool_choice = iteration === 1 ? 'auto' : 'none';
+    }
+
+    const response = await fetch(`${NEBIUS_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${NEBIUS_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Nebius API Error:', {
+      status: response.status,
+      statusText: response.statusText,
+      response: errorText
+    });
+    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    console.error('Invalid Nebius API response format');
+    throw new Error('Invalid API response format');
+  }
+
+    const message = data.choices[0].message;
+
+    // Check if the AI wants to use tools (only if tools are supported)
+    if (toolCallingSupported && message.tool_calls && message.tool_calls.length > 0) {
+      console.log(`AI requested ${message.tool_calls.length} tool(s)`);
+
+      if (debugMode) {
+        message.tool_calls.forEach((toolCall: ToolCall, index: number) => {
+          console.log(`Tool ${index + 1}: ${toolCall.function.name}`, JSON.parse(toolCall.function.arguments));
+        });
+      }
+
+      // Add the assistant's message to conversation
+      messages.push(message);
+
+      // Execute each tool call
+      for (const toolCall of message.tool_calls) {
+        try {
+          const toolResult = await executeTool(toolCall);
+          console.log(`Tool ${toolCall.function.name} executed successfully`);
+
+          if (debugMode) {
+            console.log(`Tool result (${toolCall.function.name}):`, toolResult.substring(0, 200) + '...');
+          }
+
+          // Add tool result to conversation
+          messages.push({
+            role: 'tool',
+            tool_call_id: toolCall.id,
+            content: toolResult
+          });
+        } catch (toolError) {
+          console.error(`Tool execution failed:`, toolError);
+          messages.push({
+            role: 'tool',
+            tool_call_id: toolCall.id,
+            content: `Error executing tool: ${toolError instanceof Error ? toolError.message : 'Unknown error'}`
+          });
+        }
+      }
+
+      // Continue the conversation with tool results
+      continue;
+    } else {
+      // AI provided final answer
+      const iterationInfo = toolCallingSupported ? ` (after ${iteration} iterations)` : '';
+      console.log(`Success with Qwen model: ${QWEN_MODEL}${iterationInfo}`);
+
+      if (debugMode) {
+        console.log('Final AI response:', message.content.substring(0, 300) + '...');
+      }
+
+      return message.content;
+    }
+  }
+
+  // If we exceeded max iterations, return what we have
+  console.warn('Reached maximum tool calling iterations');
+  return 'Analysis completed with available data.';
+}
+
+// Main AI analysis function - routes to selected provider
 export async function getAISportsAnalysis(
   sport: string,
   type: 'teams' | 'players',
@@ -754,147 +1036,34 @@ export async function getAISportsAnalysis(
   debugMode: boolean = false
 ): Promise<string> {
   try {
-    // Check if tool calling is supported
-    const toolCallingSupported = await checkToolCallingSupport();
+    // Route to the selected AI provider
+    switch (AI_PROVIDER) {
+      case 'anthropic':
+        console.log('Using Anthropic Claude for AI analysis');
+        return await getAnthropicAnalysis(sport, type, selection1, selection2, stats1, stats2, debugMode);
 
-    const systemPrompt = toolCallingSupported
-      ? `You are a professional sports analyst providing expert analysis for ${sport}. You have access to current ESPN data and historical Baseball-Reference/Basketball-Reference statistics through tools. When analyzing teams or players, use the available tools to get up-to-date statistics, recent performance, league standings, and historical context to provide the most accurate analysis.
+      case 'google':
+        console.log('Using Google Gemini for AI analysis');
+        return await getGoogleAnalysis(sport, type, selection1, selection2, stats1, stats2, debugMode);
 
-Compare the two ${type} provided and give detailed insights about their performance, strengths, weaknesses, and prediction for a matchup. Keep the analysis concise but informative, around 200-300 words. Use plain text only - no markdown, no bold, no special formatting, no asterisks. Structure your response with clear section labels like "Performance Comparison:", "Key Strengths:", "Critical Weaknesses:", and "Prediction:".
+      case 'openai':
+        console.log('Using OpenAI GPT-4 for AI analysis');
+        return await getOpenAIAnalysis(sport, type, selection1, selection2, stats1, stats2, debugMode);
 
-Use the available tools to gather current data and historical context before providing your analysis. For baseball analysis, you can access historical batting/pitching/fielding stats. For basketball analysis, you can access historical per-game, totals, advanced stats, and standings.`
-      : `You are a professional sports analyst providing expert analysis for ${sport}. Compare the two ${type} provided and give detailed insights about their performance, strengths, weaknesses, and prediction for a matchup. Keep the analysis concise but informative, around 200-300 words. Use plain text only - no markdown, no bold, no special formatting, no asterisks. Structure your response with clear section labels like "Performance Comparison:", "Key Strengths:", "Critical Weaknesses:", and "Prediction:".`;
-
-    const userPrompt = generateComparisonPrompt(sport, type, selection1, selection2, stats1, stats2);
-
-    const messages: ChatMessage[] = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
-    ];
-
-    if (toolCallingSupported) {
-      console.log(`Using Qwen model with tool calling: ${QWEN_MODEL}`);
-      if (debugMode) {
-        console.log('Available tools:', ESPN_TOOLS.map(t => t.function.name));
-      }
-    } else {
-      console.log(`Using Qwen model without tool calling: ${QWEN_MODEL}`);
+      case 'nebius':
+      default:
+        console.log('Using Nebius (Qwen) for AI analysis');
+        return await getNebiusAnalysis(sport, type, selection1, selection2, stats1, stats2, debugMode);
     }
-
-    const maxIterations = toolCallingSupported ? 5 : 1; // Only 1 iteration if no tools
-    let iteration = 0;
-
-    while (iteration < maxIterations) {
-      iteration++;
-
-      const requestBody: Record<string, unknown> = {
-        model: QWEN_MODEL,
-        messages,
-        temperature: 0.6,
-        top_p: 0.95,
-        max_tokens: 800,
-      };
-
-      // Only add tools if supported
-      if (toolCallingSupported) {
-        requestBody.tools = ESPN_TOOLS;
-        requestBody.tool_choice = iteration === 1 ? 'auto' : 'none';
-      }
-
-      const response = await fetch(`${NEBIUS_BASE_URL}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${NEBIUS_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Nebius API Error:', {
-        status: response.status,
-        statusText: response.statusText,
-        response: errorText
-      });
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      console.error('Invalid Nebius API response format');
-      throw new Error('Invalid API response format');
-    }
-
-      const message = data.choices[0].message;
-
-      // Check if the AI wants to use tools (only if tools are supported)
-      if (toolCallingSupported && message.tool_calls && message.tool_calls.length > 0) {
-        console.log(`AI requested ${message.tool_calls.length} tool(s)`);
-
-        if (debugMode) {
-          message.tool_calls.forEach((toolCall: ToolCall, index: number) => {
-            console.log(`Tool ${index + 1}: ${toolCall.function.name}`, JSON.parse(toolCall.function.arguments));
-          });
-        }
-
-        // Add the assistant's message to conversation
-        messages.push(message);
-
-        // Execute each tool call
-        for (const toolCall of message.tool_calls) {
-          try {
-            const toolResult = await executeTool(toolCall);
-            console.log(`Tool ${toolCall.function.name} executed successfully`);
-
-            if (debugMode) {
-              console.log(`Tool result (${toolCall.function.name}):`, toolResult.substring(0, 200) + '...');
-            }
-
-            // Add tool result to conversation
-            messages.push({
-              role: 'tool',
-              tool_call_id: toolCall.id,
-              content: toolResult
-            });
-          } catch (toolError) {
-            console.error(`Tool execution failed:`, toolError);
-            messages.push({
-              role: 'tool',
-              tool_call_id: toolCall.id,
-              content: `Error executing tool: ${toolError instanceof Error ? toolError.message : 'Unknown error'}`
-            });
-          }
-        }
-
-        // Continue the conversation with tool results
-        continue;
-      } else {
-        // AI provided final answer
-        const iterationInfo = toolCallingSupported ? ` (after ${iteration} iterations)` : '';
-        console.log(`Success with Qwen model: ${QWEN_MODEL}${iterationInfo}`);
-
-        if (debugMode) {
-          console.log('Final AI response:', message.content.substring(0, 300) + '...');
-        }
-
-        return message.content;
-      }
-    }
-
-    // If we exceeded max iterations, return what we have
-    console.warn('Reached maximum tool calling iterations');
-    return 'Analysis completed with available data.';
-
   } catch (error) {
-    console.error('Qwen AI Analysis Error:', error);
+    console.error(`${AI_PROVIDER.toUpperCase()} AI Analysis Error:`, error);
     console.error('Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
       sport,
       type,
       selection1,
-      selection2
+      selection2,
+      provider: AI_PROVIDER
     });
 
     // Log to user-visible console for debugging
