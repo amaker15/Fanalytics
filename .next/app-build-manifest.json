@@ -30,18 +30,6 @@
       "static/chunks/216-5a63b5a55a9cf9ab.js",
       "static/chunks/app/layout-ceab9f33f9b78a4e.js"
     ],
-    "/mlb/page": [
-      "static/chunks/webpack-d56d4d455c9a26d0.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-cf2e1d3491ac955b.js",
-      "static/chunks/main-app-c80e2b79fd32ecc3.js",
-      "static/chunks/216-5a63b5a55a9cf9ab.js",
-      "static/chunks/545-5c099e0c6d535357.js",
-      "static/chunks/70-d25d2c91a2bb59cf.js",
-      "static/chunks/813-42ff3b55daa6788b.js",
-      "static/chunks/546-67a20dd9e008bd7b.js",
-      "static/chunks/app/mlb/page-e684e843116d7511.js"
-    ],
     "/nba/page": [
       "static/chunks/webpack-d56d4d455c9a26d0.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
@@ -49,10 +37,46 @@
       "static/chunks/main-app-c80e2b79fd32ecc3.js",
       "static/chunks/216-5a63b5a55a9cf9ab.js",
       "static/chunks/545-5c099e0c6d535357.js",
-      "static/chunks/70-d25d2c91a2bb59cf.js",
+      "static/chunks/868-aa96685c2d65d170.js",
       "static/chunks/813-42ff3b55daa6788b.js",
-      "static/chunks/546-67a20dd9e008bd7b.js",
-      "static/chunks/app/nba/page-5144f8b21a7d1993.js"
+      "static/chunks/546-9c60d533dc3cff6a.js",
+      "static/chunks/app/nba/page-363c046b145dd02c.js"
+    ],
+    "/mlb/page": [
+      "static/chunks/webpack-d56d4d455c9a26d0.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-cf2e1d3491ac955b.js",
+      "static/chunks/main-app-c80e2b79fd32ecc3.js",
+      "static/chunks/216-5a63b5a55a9cf9ab.js",
+      "static/chunks/545-5c099e0c6d535357.js",
+      "static/chunks/868-aa96685c2d65d170.js",
+      "static/chunks/813-42ff3b55daa6788b.js",
+      "static/chunks/546-9c60d533dc3cff6a.js",
+      "static/chunks/app/mlb/page-f02d679255eb53b8.js"
+    ],
+    "/ncaa-football/page": [
+      "static/chunks/webpack-d56d4d455c9a26d0.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-cf2e1d3491ac955b.js",
+      "static/chunks/main-app-c80e2b79fd32ecc3.js",
+      "static/chunks/216-5a63b5a55a9cf9ab.js",
+      "static/chunks/545-5c099e0c6d535357.js",
+      "static/chunks/868-aa96685c2d65d170.js",
+      "static/chunks/813-42ff3b55daa6788b.js",
+      "static/chunks/546-9c60d533dc3cff6a.js",
+      "static/chunks/app/ncaa-football/page-41801fcdc02fc63b.js"
+    ],
+    "/ncaa-basketball/page": [
+      "static/chunks/webpack-d56d4d455c9a26d0.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-cf2e1d3491ac955b.js",
+      "static/chunks/main-app-c80e2b79fd32ecc3.js",
+      "static/chunks/216-5a63b5a55a9cf9ab.js",
+      "static/chunks/545-5c099e0c6d535357.js",
+      "static/chunks/868-aa96685c2d65d170.js",
+      "static/chunks/813-42ff3b55daa6788b.js",
+      "static/chunks/546-9c60d533dc3cff6a.js",
+      "static/chunks/app/ncaa-basketball/page-d47408711da831b7.js"
     ],
     "/news/page": [
       "static/chunks/webpack-d56d4d455c9a26d0.js",
@@ -63,30 +87,6 @@
       "static/chunks/545-5c099e0c6d535357.js",
       "static/chunks/813-42ff3b55daa6788b.js",
       "static/chunks/app/news/page-7e1bb21ec3d2d18a.js"
-    ],
-    "/ncaa-basketball/page": [
-      "static/chunks/webpack-d56d4d455c9a26d0.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-cf2e1d3491ac955b.js",
-      "static/chunks/main-app-c80e2b79fd32ecc3.js",
-      "static/chunks/216-5a63b5a55a9cf9ab.js",
-      "static/chunks/545-5c099e0c6d535357.js",
-      "static/chunks/70-d25d2c91a2bb59cf.js",
-      "static/chunks/813-42ff3b55daa6788b.js",
-      "static/chunks/546-67a20dd9e008bd7b.js",
-      "static/chunks/app/ncaa-basketball/page-405c0a46c2580e86.js"
-    ],
-    "/ncaa-football/page": [
-      "static/chunks/webpack-d56d4d455c9a26d0.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-cf2e1d3491ac955b.js",
-      "static/chunks/main-app-c80e2b79fd32ecc3.js",
-      "static/chunks/216-5a63b5a55a9cf9ab.js",
-      "static/chunks/545-5c099e0c6d535357.js",
-      "static/chunks/70-d25d2c91a2bb59cf.js",
-      "static/chunks/813-42ff3b55daa6788b.js",
-      "static/chunks/546-67a20dd9e008bd7b.js",
-      "static/chunks/app/ncaa-football/page-8fe4bd1785bffc94.js"
     ],
     "/page": [
       "static/chunks/webpack-d56d4d455c9a26d0.js",
