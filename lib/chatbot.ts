@@ -74,6 +74,19 @@ if (m2) return m2[0];
 return undefined;
 }
 
+function toPlainTextResponse(text: string | null | undefined): string {
+if (!text) return "";
+let cleaned = text;
+cleaned = cleaned.replace(/```[\s\S]*?```/g, (block) => block.replace(/```/g, ""));
+cleaned = cleaned.replace(/[*_`~]/g, "");
+cleaned = cleaned.replace(/\|/g, " ");
+cleaned = cleaned.replace(/^#+\s*/gm, "");
+cleaned = cleaned.replace(/^\s*[-•]\s+/gm, "");
+cleaned = cleaned.replace(/\r/g, "");
+cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
+return cleaned.trim();
+}
+
 /* ============================================================
 TOOLS DEFINITION
 ============================================================ */
@@ -236,6 +249,7 @@ content: [
 "- Always use tools for scores, box scores, player stats, or betting odds.",
 "- Do NOT invent scores, dates, or stats. If a tool returns ok=false, say you don't have the data.",
 "- When a tool returns a date or URL, trust that over your own guesses.",
+"- Respond in plain text only. Do not use Markdown, tables, bullet lists, bold, italics, or special formatting.",
 ].join("\n"),
 },
 { role: "user", content: query },
@@ -255,13 +269,13 @@ const firstMessage = resp.choices[0].message;
 const toolCalls = firstMessage.tool_calls;
 
 if (!toolCalls || toolCalls.length === 0) {
-return firstMessage.content ?? "";
+return toPlainTextResponse(firstMessage.content);
 }
 
 const call = toolCalls[0];
 
 if (call.type !== "function") {
-return firstMessage.content ?? "";
+return toPlainTextResponse(firstMessage.content);
 }
 
 const fn = call.function;
@@ -597,5 +611,5 @@ model: CHAT_MODEL,
 messages,
 });
 
-return final.choices[0].message.content ?? "";
+return toPlainTextResponse(final.choices[0].message.content);
 }
