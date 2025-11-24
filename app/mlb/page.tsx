@@ -292,14 +292,14 @@ export default function MLB() {
 
   // Helper functions for date ranges
   const getDayStartDate = (day: number) => {
-    const startDate = new Date(2025, 2, 28); // March 28, 2025 - 2025 MLB season
+    const startDate = new Date(2026, 2, 28); // March 28, 2026 - 2026 MLB season
     const dayDate = new Date(startDate);
     dayDate.setDate(startDate.getDate() + (day - 1));
     return dayDate.toISOString().split('T')[0].replace(/-/g, '');
   };
 
   const getDayEndDate = (day: number) => {
-    const startDate = new Date(2025, 2, 28); // March 28, 2025 - 2025 MLB season
+    const startDate = new Date(2026, 2, 28); // March 28, 2026 - 2026 MLB season
     const dayDate = new Date(startDate);
     dayDate.setDate(startDate.getDate() + (day - 1));
     return dayDate.toISOString().split('T')[0].replace(/-/g, '');
@@ -472,10 +472,10 @@ export default function MLB() {
                           options={
                             players.length > 0
                               ? players.map((player) => ({
-                                  value: player.displayName,
-                                  label: player.displayName,
-                                  position: player.position.abbreviation,
-                                }))
+                                value: player.displayName,
+                                label: player.displayName,
+                                position: player.position.abbreviation,
+                              }))
                               : [{ value: "loading", label: "Loading players..." }]
                           }
                           value={firstSelection}
@@ -510,10 +510,10 @@ export default function MLB() {
                           options={
                             players.length > 0
                               ? players.map((player) => ({
-                                  value: player.displayName,
-                                  label: player.displayName,
-                                  position: player.position.abbreviation,
-                                }))
+                                value: player.displayName,
+                                label: player.displayName,
+                                position: player.position.abbreviation,
+                              }))
                               : [{ value: "loading", label: "Loading players..." }]
                           }
                           value={secondSelection}
@@ -581,11 +581,10 @@ export default function MLB() {
               <button
                 key={week}
                 onClick={() => setSelectedWeek(week)}
-                className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                  selectedWeek === week
+                className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${selectedWeek === week
                     ? 'text-white border-b-2 border-blue-600'
                     : 'text-zinc-400 hover:text-white'
-                }`}
+                  }`}
               >
                 {getDayDate(week)}
               </button>
@@ -638,13 +637,12 @@ export default function MLB() {
                         day: 'numeric'
                       })}
                     </span>
-                    <span className={`text-sm px-2 py-1 rounded ${
-                      game.status.type.state === 'post'
+                    <span className={`text-sm px-2 py-1 rounded ${game.status.type.state === 'post'
                         ? 'bg-green-600/20 text-green-400'
                         : game.status.type.state === 'in'
-                        ? 'bg-red-600/20 text-red-400'
-                        : 'bg-blue-600/20 text-blue-400'
-                    }`}>
+                          ? 'bg-red-600/20 text-red-400'
+                          : 'bg-blue-600/20 text-blue-400'
+                      }`}>
                       {gameStatus}
                     </span>
                   </div>

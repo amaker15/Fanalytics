@@ -252,7 +252,7 @@ export default function NCAABasketball() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const weeks = Array.from({ length: 35 }, (_, i) => i + 1);
+  const weeks = [1];
 
   // Fetch NCAA Basketball data from ESPN API
   useEffect(() => {
@@ -481,10 +481,10 @@ export default function NCAABasketball() {
                           options={
                             players.length > 0
                               ? players.map((player) => ({
-                                  value: player.displayName,
-                                  label: player.displayName,
-                                  position: player.position.abbreviation,
-                                }))
+                                value: player.displayName,
+                                label: player.displayName,
+                                position: player.position.abbreviation,
+                              }))
                               : [{ value: "loading", label: "Loading players..." }]
                           }
                           value={firstSelection}
@@ -519,10 +519,10 @@ export default function NCAABasketball() {
                           options={
                             players.length > 0
                               ? players.map((player) => ({
-                                  value: player.displayName,
-                                  label: player.displayName,
-                                  position: player.position.abbreviation,
-                                }))
+                                value: player.displayName,
+                                label: player.displayName,
+                                position: player.position.abbreviation,
+                              }))
                               : [{ value: "loading", label: "Loading players..." }]
                           }
                           value={secondSelection}
@@ -590,11 +590,10 @@ export default function NCAABasketball() {
               <button
                 key={week}
                 onClick={() => setSelectedWeek(week)}
-                className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                  selectedWeek === week
+                className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${selectedWeek === week
                     ? 'text-white border-b-2 border-green-600'
                     : 'text-zinc-400 hover:text-white'
-                }`}
+                  }`}
               >
                 {getWeekDate(week)}
               </button>
@@ -647,13 +646,12 @@ export default function NCAABasketball() {
                         day: 'numeric'
                       })}
                     </span>
-                    <span className={`text-sm px-2 py-1 rounded ${
-                      game.status.type.state === 'post'
+                    <span className={`text-sm px-2 py-1 rounded ${game.status.type.state === 'post'
                         ? 'bg-green-600/20 text-green-400'
                         : game.status.type.state === 'in'
-                        ? 'bg-red-600/20 text-red-400'
-                        : 'bg-blue-600/20 text-blue-400'
-                    }`}>
+                          ? 'bg-red-600/20 text-red-400'
+                          : 'bg-blue-600/20 text-blue-400'
+                      }`}>
                       {gameStatus}
                     </span>
                   </div>
