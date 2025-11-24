@@ -8,6 +8,7 @@
  * @created November 24, 2025
  * @license MIT
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import 'dotenv/config';
 
@@ -78,6 +79,7 @@ interface ESPNSummary {
     competitions?: ESPNCompetition[];
   };
   leaders?: any[];
+  boxscore?: any;
   gamePackageJSON?: {
     leaders?: any[];
     boxscore?: any;

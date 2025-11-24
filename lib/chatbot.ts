@@ -8,6 +8,7 @@
  * @created November 24, 2025
  * @license MIT
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import OpenAI from "openai";
 import {

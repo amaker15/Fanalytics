@@ -8,6 +8,7 @@
  * @created November 24, 2025
  * @license MIT
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import fetch from "node-fetch";
 
@@ -48,7 +49,7 @@ summary: `https://site.api.espn.com/apis/site/v2/sports/${SPORT_PATH.nhl}/summar
 },
 };
 
-async function getJSON(url: string) {
+async function getJSON(url: string): Promise<any> {
 const res = await fetch(url, {
 headers: { "User-Agent": "sportsbot/1.0 (educational)" } as any,
 });
@@ -60,14 +61,14 @@ return res.json();
 SCOREBOARD & SUMMARY HELPERS
 ============================================================ */
 
-export async function getScoreboard(sport: SportKey, date?: string) {
+export async function getScoreboard(sport: SportKey, date?: string): Promise<{ url: string; data: any }> {
 const base = ENDPOINTS[sport].scoreboard;
 const url = date ? `${base}?dates=${encodeURIComponent(date)}` : base;
 const data = await getJSON(url);
 return { url, data };
 }
 
-export async function getSummary(sport: SportKey, eventId: string) {
+export async function getSummary(sport: SportKey, eventId: string): Promise<{ url: string; data: any }> {
 const url = ENDPOINTS[sport].summary + eventId;
 const data = await getJSON(url);
 return { url, data };
@@ -156,7 +157,7 @@ const q = teamQuery.toLowerCase();
 
 // 1) Standard scoreboard (with date if provided)
 const { url, data } = await getScoreboard(sport, date);
-let events = data?.events ?? [];
+const events = data?.events ?? [];
 
 // 2) Prepare list of games for debugging / explanations
 const games: { id: string; home: string; away: string; status: string }[] = [];

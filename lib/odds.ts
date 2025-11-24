@@ -8,6 +8,7 @@
  * @created November 24, 2025
  * @license MIT
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import fetch from "node-fetch";
 
@@ -20,7 +21,7 @@ football_nfl: "americanfootball_nfl",
 baseball_mlb: "baseball_mlb",
 };
 
-export async function getOdds(sport: string) {
+export async function getOdds(sport: string): Promise<OddsGame[]> {
 const apiSport = ODDS_SPORT_MAP[sport] || sport;
 const params = new URLSearchParams({
 apiKey: process.env.ODDS_API_KEY!,
@@ -31,7 +32,8 @@ oddsFormat: 'american'
 const url = `${ODDS_URL}/sports/${apiSport}/odds?${params.toString()}`;
 const res = await fetch(url);
 if (!res.ok) throw new Error(`${res.statusText}`);
-return res.json();
+const json = await res.json();
+return json as OddsGame[];
 }
 
 interface OddsOutcome {
