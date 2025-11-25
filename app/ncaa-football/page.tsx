@@ -16,25 +16,11 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Combobox } from '@/components/ui/combobox';
+
+
 import { Menu, Sparkles, TrendingUp, RefreshCw } from 'lucide-react';
 import SportsNavigation from '@/components/sports-navigation';
-import { getAISportsAnalysis } from '@/lib/nebius';
+import AIInsightsDialog from '@/components/ai-insights-dialog';
 import {
   getNCAAFootballScores,
   getNCAAFootballTeams,
@@ -251,12 +237,6 @@ const ncaaFootballPlayerStats = {
 
 export default function NCAAFootball() {
   const [selectedWeek, setSelectedWeek] = useState(1);
-  const [comparisonType, setComparisonType] = useState<'teams' | 'players'>('teams');
-  const [firstSelection, setFirstSelection] = useState('');
-  const [secondSelection, setSecondSelection] = useState('');
-  const [aiAnalysis, setAiAnalysis] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   // ESPN API data state
   const [games, setGames] = useState<ESPNEvent[]>([]);
@@ -297,21 +277,7 @@ export default function NCAAFootball() {
     fetchNCAAFootballData();
   }, [selectedWeek]);
 
-  // Fetch players only when switching to player comparison mode
-  useEffect(() => {
-    const fetchPlayers = async () => {
-      if (comparisonType === 'players' && players.length === 0) {
-        try {
-          const playersData = await getAllNCAAPlayers('football');
-          setPlayers(playersData);
-        } catch (playerErr) {
-          console.warn('Error fetching NCAA Football players:', playerErr);
-        }
-      }
-    };
 
-    fetchPlayers();
-  }, [comparisonType, players.length]);
 
   // Helper functions for date ranges
   const getWeekStartDate = (week: number) => {
@@ -333,71 +299,7 @@ export default function NCAAFootball() {
     return `Week ${week}`;
   };
 
-  const getAIComparison = async () => {
-    setIsAnalyzing(true);
-    setAiAnalysis('');
 
-    try {
-      if (comparisonType === 'teams') {
-        // Find teams by name from ESPN data
-        const team1 = teams.find(t => t.displayName === firstSelection || t.name === firstSelection);
-        const team2 = teams.find(t => t.displayName === secondSelection || t.name === secondSelection);
-
-        if (team1 && team2) {
-          // Create stats objects from ESPN team data
-          const team1Stats = {
-            record: team1.record?.summary || '0-0',
-            rank: team1.rank || 'Unranked',
-            location: team1.location,
-            nickname: team1.nickname
-          };
-          const team2Stats = {
-            record: team2.record?.summary || '0-0',
-            rank: team2.rank || 'Unranked',
-            location: team2.location,
-            nickname: team2.nickname
-          };
-
-          const analysis = await getAISportsAnalysis('NCAA Football', 'teams', team1.displayName, team2.displayName, team1Stats, team2Stats);
-          setAiAnalysis(analysis);
-        }
-      } else {
-        // For players, use live ESPN data
-        const player1 = players.find(p => p.displayName === firstSelection || p.fullName === firstSelection);
-        const player2 = players.find(p => p.displayName === secondSelection || p.fullName === secondSelection);
-
-        if (player1 && player2) {
-          // Create stats objects from ESPN player data
-          const player1Stats = {
-            position: player1.position.displayName,
-            team: 'NCAA Football Player', // Generic since we don't have specific team from player data
-            age: player1.age,
-            height: player1.displayHeight,
-            weight: player1.displayWeight,
-            experience: player1.experience.years,
-            college: player1.college?.name || 'Unknown'
-          };
-          const player2Stats = {
-            position: player2.position.displayName,
-            team: 'NCAA Football Player', // Generic since we don't have specific team from player data
-            age: player2.age,
-            height: player2.displayHeight,
-            weight: player2.displayWeight,
-            experience: player2.experience.years,
-            college: player2.college?.name || 'Unknown'
-          };
-
-          const analysis = await getAISportsAnalysis('NCAA Football', 'players', player1.displayName, player2.displayName, player1Stats, player2Stats);
-          setAiAnalysis(analysis);
-        }
-      }
-    } catch (error) {
-      console.error('AI Analysis failed:', error);
-      setAiAnalysis('AI Analysis Error\n\nUnable to generate analysis at this time. Please try again later.');
-    }
-
-    setIsAnalyzing(false);
-  };
 
   return (
     <div className="min-h-screen bg-[#0b0b0e] text-white">
@@ -435,162 +337,12 @@ export default function NCAAFootball() {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-red-600 to-yellow-600 hover:from-red-700 hover:to-yellow-700 text-white">
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    AI Compare
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto bg-zinc-900 border-zinc-800">
-                  <DialogHeader>
-                    <DialogTitle className="text-2xl flex items-center gap-2">
-                      <Sparkles className="h-6 w-6 text-red-500" />
-                      AI-Powered Comparison
-                    </DialogTitle>
-                    <DialogDescription className="text-zinc-400">
-                      Compare NCAA Football teams or players using advanced analytics and AI insights
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-6 py-4">
-                    {/* Comparison Type */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Comparison Type</label>
-                      <Tabs
-                        value={comparisonType}
-                        onValueChange={(v) => {
-                          setComparisonType(v as 'teams' | 'players');
-                          setFirstSelection('');
-                          setSecondSelection('');
-                          setAiAnalysis('');
-                        }}
-                      >
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="teams">Teams</TabsTrigger>
-                          <TabsTrigger value="players">Players</TabsTrigger>
-                        </TabsList>
-                      </Tabs>
-                    </div>
-
-                    {/* First Selection */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">
-                        First {comparisonType === 'teams' ? 'Team' : 'Player'}
-                      </label>
-                      {comparisonType === 'teams' ? (
-                        <Select value={firstSelection} onValueChange={setFirstSelection}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select team" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {teams.map((team) => (
-                              <SelectItem key={team.id} value={team.displayName}>
-                                {team.displayName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Combobox
-                          options={
-                            players.length > 0
-                              ? players.map((player) => ({
-                                  value: player.displayName,
-                                  label: player.displayName,
-                                  position: player.position.abbreviation,
-                                }))
-                              : [{ value: "loading", label: "Loading players..." }]
-                          }
-                          value={firstSelection}
-                          onValueChange={setFirstSelection}
-                          placeholder="Select player"
-                          searchPlaceholder="Search players..."
-                          emptyMessage="No players found."
-                        />
-                      )}
-                    </div>
-
-                    {/* Second Selection */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">
-                        Second {comparisonType === 'teams' ? 'Team' : 'Player'}
-                      </label>
-                      {comparisonType === 'teams' ? (
-                        <Select value={secondSelection} onValueChange={setSecondSelection}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select team" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {teams.map((team) => (
-                              <SelectItem key={team.id} value={team.displayName}>
-                                {team.displayName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Combobox
-                          options={
-                            players.length > 0
-                              ? players.map((player) => ({
-                                  value: player.displayName,
-                                  label: player.displayName,
-                                  position: player.position.abbreviation,
-                                }))
-                              : [{ value: "loading", label: "Loading players..." }]
-                          }
-                          value={secondSelection}
-                          onValueChange={setSecondSelection}
-                          placeholder="Select player"
-                          searchPlaceholder="Search players..."
-                          emptyMessage="No players found."
-                        />
-                      )}
-                    </div>
-
-                    {/* Compare Button */}
-                    <Button
-                      onClick={getAIComparison}
-                      disabled={!firstSelection || !secondSelection || isAnalyzing}
-                      className="w-full bg-gradient-to-r from-red-600 to-yellow-600 hover:from-red-700 hover:to-yellow-700"
-                    >
-                      {isAnalyzing ? (
-                        <>
-                          <Sparkles className="h-4 w-4 mr-2 animate-spin" />
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Generate AI Analysis
-                        </>
-                      )}
-                    </Button>
-
-                    {/* AI Analysis Result */}
-                    {aiAnalysis && (
-                      <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700">
-                        <div className="prose prose-invert max-w-none">
-                          {aiAnalysis.split('\n').map((line, i) => {
-                            if (line.startsWith('**') && line.endsWith('**')) {
-                              return (
-                                <h4 key={i} className="text-red-400 font-semibold mt-3 mb-2">
-                                  {line.replace(/\*\*/g, '')}
-                                </h4>
-                              );
-                            }
-                            return line ? (
-                              <p key={i} className="text-zinc-300 text-sm mb-2">
-                                {line}
-                              </p>
-                            ) : null;
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <AIInsightsDialog>
+                <Button className="bg-gradient-to-r from-red-600 to-yellow-600 hover:from-red-700 hover:to-yellow-700 text-white">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  AI Insights
+                </Button>
+              </AIInsightsDialog>
             </div>
           </div>
         </div>
@@ -604,11 +356,10 @@ export default function NCAAFootball() {
               <button
                 key={week}
                 onClick={() => setSelectedWeek(week)}
-                className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                  selectedWeek === week
+                className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${selectedWeek === week
                     ? 'text-white border-b-2 border-red-600'
                     : 'text-zinc-400 hover:text-white'
-                }`}
+                  }`}
               >
                 {getWeekDate(week)}
               </button>
@@ -661,13 +412,12 @@ export default function NCAAFootball() {
                         day: 'numeric'
                       })}
                     </span>
-                    <span className={`text-sm px-2 py-1 rounded ${
-                      game.status.type.state === 'post'
+                    <span className={`text-sm px-2 py-1 rounded ${game.status.type.state === 'post'
                         ? 'bg-green-600/20 text-green-400'
                         : game.status.type.state === 'in'
-                        ? 'bg-red-600/20 text-red-400'
-                        : 'bg-blue-600/20 text-blue-400'
-                    }`}>
+                          ? 'bg-red-600/20 text-red-400'
+                          : 'bg-blue-600/20 text-blue-400'
+                      }`}>
                       {gameStatus}
                     </span>
                   </div>

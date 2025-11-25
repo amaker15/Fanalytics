@@ -17,16 +17,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { Menu, TrendingUp, Clock, User, ExternalLink, Sparkles, RefreshCw } from 'lucide-react';
 import SportsNavigation from '@/components/sports-navigation';
+import AIInsightsDialog from '@/components/ai-insights-dialog';
 import {
   getNFLNews,
   getNBANews,
@@ -44,7 +37,6 @@ export default function News() {
   const [articles, setArticles] = useState<ESPNNewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -172,25 +164,12 @@ export default function News() {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    AI Compare
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto bg-zinc-900 border-zinc-800">
-                  <DialogHeader>
-                    <DialogTitle className="text-2xl flex items-center gap-2">
-                      <Sparkles className="h-6 w-6 text-purple-500" />
-                      AI Insights Coming Soon
-                    </DialogTitle>
-                    <DialogDescription className="text-zinc-400">
-                      Stay tuned for AI-powered news summaries and personalized headlines.
-                    </DialogDescription>
-                  </DialogHeader>
-                </DialogContent>
-              </Dialog>
+              <AIInsightsDialog>
+                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  AI Insights
+                </Button>
+              </AIInsightsDialog>
             </div>
           </div>
         </div>
@@ -208,8 +187,8 @@ export default function News() {
                   setSelectedArticle(null);
                 }}
                 className={`px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${selectedCategory === category
-                    ? 'text-white border-b-2 border-purple-600'
-                    : 'text-zinc-400 hover:text-white'
+                  ? 'text-white border-b-2 border-purple-600'
+                  : 'text-zinc-400 hover:text-white'
                   }`}
               >
                 {category}
