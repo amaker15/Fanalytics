@@ -665,11 +665,52 @@ export async function getPlayerDetails(
     season?: number
 ): Promise<PlayerInfo> {
     const base = `https://site.web.api.espn.com/apis/common/v3/sports/${SPORT_PATH[sport]}/athletes/${athleteId}?region=us&lang=en`;
+
     try {
+        // 1. Fetch Bio Info
         const url = season ? `${base}&season=${season}` : base;
         const j = await getJSON(url);
         const core = j?.athlete || j;
-        const { statsRecord, statLines } = buildSeasonStats(core?.statsSummary);
+
+        // 2. Fetch Detailed Stats from Splits (to get Rushing for QBs, etc.)
+        // Use provided season or default to current year (approximate)
+        const targetSeason = season || new Date().getFullYear();
+        const splitsUrl = `https://site.web.api.espn.com/apis/common/v3/sports/${SPORT_PATH[sport]}/athletes/${athleteId}/splits?season=${targetSeason}&region=us&lang=en`;
+
+        let statsRecord: Record<string, number> = {};
+        let statLines: SeasonStatLine[] = [];
+
+        try {
+            const splitsData = await getJSON(splitsUrl);
+            const generalSplits = splitsData.splitCategories?.[0]?.splits || [];
+            const split = generalSplits.find((s: any) =>
+                s.displayName === "All Splits" ||
+                s.displayName === "Regular Season" ||
+                s.displayName === targetSeason.toString()
+            );
+
+            if (split && splitsData.displayNames) {
+                splitsData.displayNames.forEach((name: string, i: number) => {
+                    const val = split.stats[i];
+                    const numeric = Number(String(val).replace(/[^\d.-]/g, ''));
+                    statsRecord[name.toLowerCase()] = isNaN(numeric) ? 0 : numeric;
+                    statLines.push({ label: name, value: String(val) });
+                });
+            }
+        } catch (e) {
+            console.warn("Failed to fetch splits, falling back to summary:", e);
+            // Fallback to original summary if splits fail
+            const summary = buildSeasonStats(core?.statsSummary);
+            statsRecord = summary.statsRecord;
+            statLines = summary.statLines;
+        }
+
+        // If splits didn't yield data, try fallback again
+        if (Object.keys(statsRecord).length === 0) {
+            const summary = buildSeasonStats(core?.statsSummary);
+            statsRecord = summary.statsRecord;
+            statLines = summary.statLines;
+        }
 
         return {
             ok: true,
@@ -685,7 +726,7 @@ export async function getPlayerDetails(
             height: core?.displayHeight,
             weight: core?.displayWeight,
             season: season ?? j?.season?.year,
-            seasonLabel: core?.statsSummary?.displayName,
+            seasonLabel: core?.statsSummary?.displayName || `${targetSeason} Season`,
             seasonStats: Object.keys(statsRecord).length ? statsRecord : undefined,
             seasonStatsList: statLines.length ? statLines : undefined,
             url,
