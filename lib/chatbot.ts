@@ -1,7 +1,7 @@
 /*
  * Fanalytics - Sports Chatbot Library
  *
- * This library provides AI-powered sports chat functionality using OpenAI,
+ * This library provides AI-powered sports chat functionality using OpenAI/Nebius,
  * integrating ESPN data, player stats, betting odds, and web search.
  *
  * @author Fanalytics Team
@@ -12,604 +12,585 @@
 
 import OpenAI from "openai";
 import {
-SportKey,
-getScoreboard,
-getBoxscore,
-formatBoard,
-formatBoxscore,
-formatSummaryLine,
-searchPlayer,
-getPlayerDetails,
-normalizeNFLStats,
-computeFantasyFromNFL,
+  SportKey,
+  getScoreboard,
+  getBoxscore,
+  formatBoard,
+  formatBoxscore,
+  formatSummaryLine,
+  searchPlayer,
+  getPlayerDetails,
+  normalizeNFLStats,
+  computeFantasyFromNFL,
+  findEventIdByTeam,
+  getPlayerGameStats,
 } from "./espn-data";
 import { getOdds, formatOdds } from "./odds";
 
-const NEBIUS_API_KEY =
-  "v1.CmQKHHN0YXRpY2tleS1lMDBrcjJmc3I2amVjdDk5NWMSIXNlcnZpY2VhY2NvdW50LWUwMGFqejNtcWEyNjBudnJ4bTIMCIXJkskGEN7PhK0BOgwIhMyqlAcQwPS23wJAAloDZTAw.AAAAAAAAAAEh9hZKh9DwuPBRsU8tPlOWEipcg6hbXiOxpv1M7qH-EPArxhsU6qYAJGirNLkd2yOeaqcxZYRW1lQyxdiTeqUI";
-const NEBIUS_BASE_URL = "https://api.tokenfactory.nebius.com/v1/";
-const NEBIUS_MODEL = "openai/gpt-oss-120b";
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? NEBIUS_API_KEY;
-const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL ?? NEBIUS_BASE_URL;
-const CHAT_MODEL = process.env.OPENAI_MODEL ?? NEBIUS_MODEL;
+const AI_PROVIDER = process.env.AI_PROVIDER || 'nebius'; // Default to nebius if not set, but keys must be present
 
-const client = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-  baseURL: OPENAI_BASE_URL,
-});
+// Helper to get client based on provider
+function getAIClient() {
+  const apiKey = process.env.OPENAI_API_KEY || process.env.NEBIUS_API_KEY;
+  const baseURL = process.env.OPENAI_BASE_URL || (process.env.NEBIUS_API_KEY ? "https://api.tokenfactory.nebius.com/v1/" : undefined);
+
+  if (!apiKey) {
+    throw new Error("Missing API Key. Please set OPENAI_API_KEY or NEBIUS_API_KEY in .env.local");
+  }
+
+  return new OpenAI({
+    apiKey,
+    baseURL,
+  });
+}
+
+const CHAT_MODEL = process.env.OPENAI_MODEL || "openai/gpt-oss-120b"; // Default to Nebius model if not specified
 
 /* ============================================================
-DATE HELPERS
-============================================================ */
+   DATE HELPERS
+   ============================================================ */
 
 function toYYYYMMDD(d: Date): string {
-return d.toISOString().split("T")[0].replace(/-/g, "");
+  return d.toISOString().split("T")[0].replace(/-/g, "");
 }
 
 function extractYYYYMMDD(text: string | undefined): string | undefined {
-if (!text) return undefined;
-const s = text.toLowerCase().trim();
+  if (!text) return undefined;
+  const s = text.toLowerCase().trim();
 
-if (/\btoday\b/.test(s)) return toYYYYMMDD(new Date());
+  if (/\btoday\b/.test(s)) return toYYYYMMDD(new Date());
 
-if (/\byesterday\b/.test(s)) {
-const d = new Date();
-d.setDate(d.getDate() - 1);
-return toYYYYMMDD(d);
-}
+  if (/\byesterday\b/.test(s)) {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return toYYYYMMDD(d);
+  }
 
-// 11/16/2025 or 11-16-25
-const m1 = s.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-if (m1) {
-const [, m, d, y] = m1;
-const yy = y.length === 2 ? "20" + y : y;
-return `${yy}${m.padStart(2, "0")}${d.padStart(2, "0")}`;
-}
+  // 11/16/2025 or 11-16-25
+  const m1 = s.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if (m1) {
+    const [, m, d, y] = m1;
+    const yy = y.length === 2 ? "20" + y : y;
+    return `${yy}${m.padStart(2, "0")}${d.padStart(2, "0")}`;
+  }
 
-// raw YYYYMMDD
-const m2 = s.match(/\b(\d{4})(\d{2})(\d{2})\b/);
-if (m2) return m2[0];
+  // raw YYYYMMDD
+  const m2 = s.match(/\b(\d{4})(\d{2})(\d{2})\b/);
+  if (m2) return m2[0];
 
-return undefined;
+  return undefined;
 }
 
 function toPlainTextResponse(text: string | null | undefined): string {
-if (!text) return "";
-let cleaned = text;
-cleaned = cleaned.replace(/```[\s\S]*?```/g, (block) => block.replace(/```/g, ""));
-cleaned = cleaned.replace(/[*_`~]/g, "");
-cleaned = cleaned.replace(/\|/g, " ");
-cleaned = cleaned.replace(/^#+\s*/gm, "");
-cleaned = cleaned.replace(/^\s*[-•]\s+/gm, "");
-cleaned = cleaned.replace(/\r/g, "");
-cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
-return cleaned.trim();
+  if (!text) return "";
+  let cleaned = text;
+  // Remove markdown code blocks
+  cleaned = cleaned.replace(/```[\s\S]*?```/g, (block) => block.replace(/```/g, ""));
+  // Remove bold/italic markers but keep text
+  cleaned = cleaned.replace(/[*_`~]/g, "");
+  // Replace table pipes with spaces
+  cleaned = cleaned.replace(/\|/g, " ");
+  // Remove headers
+  cleaned = cleaned.replace(/^#+\s*/gm, "");
+  // Remove list markers
+  cleaned = cleaned.replace(/^\s*[-•]\s+/gm, "");
+  // Normalize newlines
+  cleaned = cleaned.replace(/\r/g, "");
+  cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
+  return cleaned.trim();
 }
 
 /* ============================================================
-TOOLS DEFINITION
-============================================================ */
+   TOOLS DEFINITION
+   ============================================================ */
 
 const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
-{
-type: "function",
-function: {
-name: "get_scoreboard",
-description: "Get the scoreboard for a given league and date from ESPN.",
-parameters: {
-type: "object",
-properties: {
-sport: {
-type: "string",
-enum: ["nba", "nfl", "mlb", "mcb", "nhl"],
-},
-date: {
-type: "string",
-description:
-"Optional date (e.g. 'today', 'yesterday', '11/16/2025', '2025-11-16', or '20251116'). If omitted, assume today.",
-},
-},
-required: ["sport"],
-},
-},
-},
-{
-type: "function",
-function: {
-name: "get_boxscore_for_team",
-description:
-"Get the box score for a specific team on a specific date from ESPN.",
-parameters: {
-type: "object",
-properties: {
-sport: {
-type: "string",
-enum: ["nba", "nfl", "mlb", "mcb", "nhl"],
-},
-team: {
-type: "string",
-description: "Team name, city, or abbreviation. E.g. 'Atlanta Hawks', 'ATL'.",
-},
-date: {
-type: "string",
-description:
-"Game date (e.g. '11/16/2025', '2025-11-16', '20251116', 'today', 'yesterday').",
-},
-},
-required: ["sport", "team", "date"],
-},
-},
-},
-{
-type: "function",
-function: {
-name: "get_player_game_stats",
-description:
-"Get a player's stats for a specific game in NBA, NFL, MLB, NCAA MBB, or NHL by scanning all boxscores on that date.",
-parameters: {
-type: "object",
-properties: {
-sport: {
-type: "string",
-enum: ["nba", "nfl", "mlb", "mcb", "nhl"],
-},
-playerName: {
-type: "string",
-description: "Player's name, e.g. 'Jalen Johnson'.",
-},
-date: {
-type: "string",
-description:
-"Game date (e.g. '11/16/2025', '2025-11-16', '20251116', 'today', 'yesterday').",
-},
-},
-required: ["sport", "playerName", "date"],
-},
-},
-},
-{
-type: "function",
-function: {
-name: "get_player_season_stats",
-description:
-"Get a player's season stats for a given league/season (NBA, NFL, MLB, NCAA MBB, NHL).",
-parameters: {
-type: "object",
-properties: {
-sport: {
-type: "string",
-enum: ["nba", "nfl", "mlb", "mcb", "nhl"],
-},
-playerName: {
-type: "string",
-description: "Name of the player, e.g. 'Trae Young'.",
-},
-season: {
-type: "number",
-description: "Season year, e.g. 2025. If omitted, use current/latest.",
-},
-},
-required: ["sport", "playerName"],
-},
-},
-},
-{
-type: "function",
-function: {
-name: "compare_players_nfl",
-description: "Compare NFL players' fantasy stats (Standard & PPR) over a season.",
-parameters: {
-type: "object",
-properties: {
-players: {
-type: "array",
-items: { type: "string" },
-description: "Two or more NFL player names.",
-},
-season: {
-type: "number",
-description: "Season year, e.g. 2025.",
-},
-},
-required: ["players"],
-},
-},
-},
-{
-type: "function",
-function: {
-name: "get_odds",
-description: "Fetch current betting odds for a sport (NBA, NFL, MLB, NCAAB).",
-parameters: {
-type: "object",
-properties: {
-sport: {
-type: "string",
-enum: ["basketball_nba", "football_nfl", "baseball_mlb", "basketball_ncaab"],
-},
-},
-required: ["sport"],
-},
-},
-},
+  {
+    type: "function",
+    function: {
+      name: "get_scoreboard",
+      description: "Get the scoreboard for a given league and date from ESPN.",
+      parameters: {
+        type: "object",
+        properties: {
+          sport: {
+            type: "string",
+            enum: ["nba", "nfl", "mlb", "mcb", "nhl"],
+          },
+          date: {
+            type: "string",
+            description:
+              "Optional date (e.g. 'today', 'yesterday', '11/16/2025', '2025-11-16', or '20251116'). If omitted, assume today.",
+          },
+        },
+        required: ["sport"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_boxscore_for_team",
+      description:
+        "Get the box score for a specific team on a specific date from ESPN.",
+      parameters: {
+        type: "object",
+        properties: {
+          sport: {
+            type: "string",
+            enum: ["nba", "nfl", "mlb", "mcb", "nhl"],
+          },
+          team: {
+            type: "string",
+            description: "Team name, city, or abbreviation. E.g. 'Atlanta Hawks', 'ATL'.",
+          },
+          date: {
+            type: "string",
+            description:
+              "Game date (e.g. '11/16/2025', '2025-11-16', '20251116', 'today', 'yesterday').",
+          },
+        },
+        required: ["sport", "team", "date"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_player_game_stats",
+      description:
+        "Get a player's stats for a specific game in NBA, NFL, MLB, NCAA MBB, or NHL by scanning all boxscores on that date.",
+      parameters: {
+        type: "object",
+        properties: {
+          sport: {
+            type: "string",
+            enum: ["nba", "nfl", "mlb", "mcb", "nhl"],
+          },
+          playerName: {
+            type: "string",
+            description: "Player's name, e.g. 'Jalen Johnson'.",
+          },
+          date: {
+            type: "string",
+            description:
+              "Game date (e.g. '11/16/2025', '2025-11-16', '20251116', 'today', 'yesterday').",
+          },
+        },
+        required: ["sport", "playerName", "date"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_player_season_stats",
+      description:
+        "Get a player's season stats for a given league/season (NBA, NFL, MLB, NCAA MBB, NHL).",
+      parameters: {
+        type: "object",
+        properties: {
+          sport: {
+            type: "string",
+            enum: ["nba", "nfl", "mlb", "mcb", "nhl"],
+          },
+          playerName: {
+            type: "string",
+            description: "Name of the player, e.g. 'Trae Young'.",
+          },
+          season: {
+            type: "number",
+            description: "Season year, e.g. 2025. If omitted, use current/latest.",
+          },
+        },
+        required: ["sport", "playerName"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "compare_players_nfl",
+      description: "Compare NFL players' fantasy stats (Standard & PPR) over a season.",
+      parameters: {
+        type: "object",
+        properties: {
+          players: {
+            type: "array",
+            items: { type: "string" },
+            description: "Two or more NFL player names.",
+          },
+          season: {
+            type: "number",
+            description: "Season year, e.g. 2025.",
+          },
+        },
+        required: ["players"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_odds",
+      description: "Fetch current betting odds for a sport (NBA, NFL, MLB, NCAAB).",
+      parameters: {
+        type: "object",
+        properties: {
+          sport: {
+            type: "string",
+            enum: ["basketball_nba", "football_nfl", "baseball_mlb", "basketball_ncaab"],
+          },
+        },
+        required: ["sport"],
+      },
+    },
+  },
 ];
 
 /* ============================================================
-CORE CHAT LOGIC
-============================================================ */
+   CORE CHAT LOGIC
+   ============================================================ */
 
 export async function runChat(query: string): Promise<string> {
-const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-{
-role: "system",
-content: [
-"You are a sports data and betting chatbot.",
-"CRITICAL:",
-"- Always use tools for scores, box scores, player stats, or betting odds.",
-"- Do NOT invent scores, dates, or stats. If a tool returns ok=false, say you don't have the data.",
-"- When a tool returns a date or URL, trust that over your own guesses.",
-"- Respond in plain text only. Do not use Markdown, tables, bullet lists, bold, italics, or special formatting.",
-].join("\n"),
-},
-{ role: "user", content: query },
-];
+  let client;
+  try {
+    client = getAIClient();
+  } catch (error: any) {
+    return `Configuration Error: ${error.message}`;
+  }
 
-const globalDateHint = extractYYYYMMDD(query);
+  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+    {
+      role: "system",
+      content: [
+        "You are a sports data and betting chatbot.",
+        "CRITICAL:",
+        "- Always use tools for scores, box scores, player stats, or betting odds.",
+        "- Do NOT invent scores, dates, or stats. If a tool returns ok=false, say you don't have the data.",
+        "- When a tool returns a date or URL, trust that over your own guesses.",
+        "- Respond in plain text only. Do not use Markdown, tables, bullet lists, bold, italics, or special formatting.",
+        "- NEVER output JSON. Speak in natural language.",
+        "- For NFL player comparisons, use the compare_players_nfl tool.",
+      ].join("\n"),
+    },
+    { role: "user", content: query },
+  ];
 
-// First pass: let the model decide which tool to call
-const resp = await client.chat.completions.create({
-model: CHAT_MODEL,
-messages,
-tools,
-tool_choice: "auto",
-});
+  const globalDateHint = extractYYYYMMDD(query);
 
-const firstMessage = resp.choices[0].message;
-const toolCalls = firstMessage.tool_calls;
+  try {
+    // First pass: let the model decide which tool to call
+    const resp = await client.chat.completions.create({
+      model: CHAT_MODEL,
+      messages,
+      tools,
+      tool_choice: "auto",
+    });
 
-if (!toolCalls || toolCalls.length === 0) {
-return toPlainTextResponse(firstMessage.content);
-}
+    const firstMessage = resp.choices[0].message;
+    const toolCalls = firstMessage.tool_calls;
 
-const call = toolCalls[0];
+    if (!toolCalls || toolCalls.length === 0) {
+      return toPlainTextResponse(firstMessage.content);
+    }
 
-if (call.type !== "function") {
-return toPlainTextResponse(firstMessage.content);
-}
+    const call = toolCalls[0];
 
-const fn = call.function;
-const name: string = fn.name;
-const args = fn.arguments ? JSON.parse(fn.arguments) : {};
+    if (call.type !== "function") {
+      return toPlainTextResponse(firstMessage.content);
+    }
 
-let toolResult: any = { ok: false, note: "Tool not handled." };
+    const fn = call.function;
+    const name: string = fn.name;
+    const args = fn.arguments ? JSON.parse(fn.arguments) : {};
 
-/* -------------------- 1) SCOREBOARD -------------------- */
+    let toolResult: any = { ok: false, note: "Tool not handled." };
 
-if (name === "get_scoreboard") {
-const sport = args.sport as SportKey;
-const dateText: string | undefined = args.date;
-const dateParam =
-extractYYYYMMDD(dateText) || globalDateHint || toYYYYMMDD(new Date());
+    /* -------------------- 1) SCOREBOARD -------------------- */
 
-const { url, data } = await getScoreboard(sport, dateParam);
-const lines = formatBoard(data);
+    if (name === "get_scoreboard") {
+      const sport = args.sport as SportKey;
+      const dateText: string | undefined = args.date;
+      const dateParam =
+        extractYYYYMMDD(dateText) || globalDateHint || toYYYYMMDD(new Date());
 
-const espnDate =
-data?.day?.date ||
-(data?.events?.[0]?.date ?? null);
+      const { url, data } = await getScoreboard(sport, dateParam);
+      const lines = formatBoard(data);
 
-toolResult = {
-ok: true,
-sport,
-requestedDate: dateParam,
-espnDate,
-url,
-lines,
-};
-}
+      const espnDate =
+        data?.day?.date ||
+        (data?.events?.[0]?.date ?? null);
 
-/* -------------------- 2) BOX SCORE FOR TEAM -------------------- */
+      toolResult = {
+        ok: true,
+        sport,
+        requestedDate: dateParam,
+        espnDate,
+        url,
+        lines,
+      };
+    }
 
-if (name === "get_boxscore_for_team") {
-const sport = args.sport as SportKey;
-const team = args.team as string;
-const dateText: string | undefined = args.date;
-const dateParam = extractYYYYMMDD(dateText) || globalDateHint;
+    /* -------------------- 2) BOX SCORE FOR TEAM -------------------- */
 
-if (!dateParam) {
-toolResult = {
-ok: false,
-note: "No valid date provided or inferred. Please include a game date.",
-};
-} else {
-const { url: scoreboardUrl, data: board } = await getScoreboard(
-sport,
-dateParam
-);
+    if (name === "get_boxscore_for_team") {
+      const sport = args.sport as SportKey;
+      const team = args.team as string;
+      const dateText: string | undefined = args.date;
+      const dateParam = extractYYYYMMDD(dateText) || globalDateHint;
 
-const events = board?.events ?? [];
-if (!events.length) {
-toolResult = {
-ok: false,
-note: `No games found for that league on ${dateParam}.`,
-scoreboardUrl,
-};
-} else {
-// crude team match
-const q = team.toLowerCase();
-let bestEventId: string | null = null;
-let bestScore = 0;
+      if (!dateParam) {
+        toolResult = {
+          ok: false,
+          note: "No valid date provided or inferred. Please include a game date.",
+        };
+      } else {
+        const { eventId, scoreboardUrl, matchScore } = await findEventIdByTeam(sport, team, dateParam);
 
-for (const ev of events) {
-const eventId = ev?.id;
-const comp = ev?.competitions?.[0];
-const competitors = comp?.competitors ?? [];
-const names: string[] = [];
-for (const c of competitors) {
-const t = c?.team ?? {};
-const parts = [
-t.displayName,
-t.shortDisplayName,
-t.abbreviation,
-t.nickname,
-t.location,
-].filter(Boolean);
-for (const p of parts) names.push((p as string).toLowerCase());
-}
-let score = 0;
-for (const n of names) {
-if (q.includes(n) || n.includes(q)) score += n.length;
-}
-if (score > bestScore && eventId) {
-bestScore = score;
-bestEventId = eventId;
-}
-}
+        if (!eventId || matchScore === 0) {
+          toolResult = {
+            ok: false,
+            note: `No game found for team '${team}' on ${dateParam}.`,
+            scoreboardUrl,
+          };
+        } else {
+          const gb = await getBoxscore(sport, eventId);
+          const raw: any =
+            (gb as any).rawSummary ??
+            (gb as any).raw ??
+            (gb as any).data ??
+            null;
+          const box = (gb as any).boxscore ?? raw?.gamePackageJSON?.boxscore;
+          const scoreLine = raw ? formatSummaryLine(raw) : undefined;
 
-if (!bestEventId || bestScore === 0) {
-toolResult = {
-ok: false,
-note: `No game found for team '${team}' on ${dateParam}.`,
-scoreboardUrl,
-};
-} else {
-const gb = await getBoxscore(sport, bestEventId);
-const raw: any =
-(gb as any).rawSummary ??
-(gb as any).raw ??
-(gb as any).data ??
-null;
-const box = (gb as any).boxscore ?? raw?.gamePackageJSON?.boxscore;
-const scoreLine = raw ? formatSummaryLine(raw) : undefined;
+          toolResult = {
+            ok: true,
+            sport,
+            team,
+            date: dateParam,
+            eventId,
+            scoreboardUrl,
+            summaryUrl: (gb as any).url,
+            scoreLine,
+            boxscoreText: box ? formatBoxscore(box, sport) : "No boxscore data.",
+          };
+        }
+      }
+    }
 
-toolResult = {
-ok: true,
-sport,
-team,
-date: dateParam,
-eventId: bestEventId,
-scoreboardUrl,
-summaryUrl: (gb as any).url,
-scoreLine,
-boxscoreText: box ? formatBoxscore(box, sport) : "No boxscore data.",
-};
-}
-}
-}
-}
+    /* -------------------- 3) PLAYER GAME STATS -------------------- */
 
-/* -------------------- 3) PLAYER GAME STATS -------------------- */
+    if (name === "get_player_game_stats") {
+      const sport = args.sport as SportKey;
+      const playerName = args.playerName as string;
+      const dateText: string | undefined = args.date;
+      const dateParam = extractYYYYMMDD(dateText) || globalDateHint;
 
-if (name === "get_player_game_stats") {
-const sport = args.sport as SportKey;
-const playerName = args.playerName as string;
-const dateText: string | undefined = args.date;
-const dateParam = extractYYYYMMDD(dateText) || globalDateHint;
+      if (!dateParam) {
+        toolResult = {
+          ok: false,
+          note: "No valid date provided or inferred. Please include a game date.",
+        };
+      } else {
+        // We need a team to search for the game, but we only have player name.
+        // This tool logic in the original file was scanning ALL games.
+        // Let's preserve that logic but use the helper if possible, or just reimplement the scan.
+        // The original implementation scanned all events.
 
-if (!dateParam) {
-toolResult = {
-ok: false,
-note: "No valid date provided or inferred. Please include a game date.",
-};
-} else {
-// 1) Get scoreboard for that sport+date
-const { url: scoreboardUrl, data: board } = await getScoreboard(
-sport,
-dateParam
-);
-const events = board?.events ?? [];
+        const { url: scoreboardUrl, data: board } = await getScoreboard(sport, dateParam);
+        const events = board?.events ?? [];
 
-if (!events.length) {
-toolResult = {
-ok: false,
-note: `No games found for that league on ${dateParam}.`,
-scoreboardUrl,
-};
-} else {
-let foundPlayer: any = null;
-let foundGame: { eventId: string; summaryUrl: string; raw: any } | null =
-null;
+        if (!events.length) {
+          toolResult = {
+            ok: false,
+            note: `No games found for that league on ${dateParam}.`,
+            scoreboardUrl,
+          };
+        } else {
+          let foundPlayer: any = null;
+          let foundGame: { eventId: string; summaryUrl: string; raw: any } | null = null;
 
-// 2) Loop over all games that day, inspect boxscore for player
-for (const ev of events) {
-const eventId = ev?.id;
-if (!eventId) continue;
+          for (const ev of events) {
+            const eventId = ev?.id;
+            if (!eventId) continue;
 
-const gb = await getBoxscore(sport, eventId);
-const raw: any =
-(gb as any).rawSummary ??
-(gb as any).raw ??
-(gb as any).data ??
-null;
-const box =
-(gb as any).boxscore ??
-raw?.gamePackageJSON?.boxscore ??
-raw?.boxscore;
+            const gb = await getBoxscore(sport, eventId);
+            const raw: any = (gb as any).rawSummary ?? (gb as any).raw ?? (gb as any).data ?? null;
+            const box = (gb as any).boxscore ?? raw?.gamePackageJSON?.boxscore ?? raw?.boxscore;
 
-const teams = box?.players || box?.teams || [];
-for (const t of teams) {
-const statsTable = t.statistics?.[0];
-const labels = statsTable?.labels || statsTable?.names || [];
-const athletes = statsTable?.athletes || t.athletes || [];
+            const teams = box?.players || box?.teams || [];
+            for (const t of teams) {
+              const statsTable = t.statistics?.[0];
+              const labels = statsTable?.labels || statsTable?.names || [];
+              const athletes = statsTable?.athletes || t.athletes || [];
 
-for (const a of athletes) {
-const nmLC =
-a?.athlete?.displayName?.toLowerCase() ||
-a?.athlete?.shortName?.toLowerCase() ||
-"";
-if (nmLC.includes(playerName.toLowerCase())) {
-foundPlayer = {
-name: a.athlete.displayName,
-team:
-t.team?.displayName ||
-t.team?.shortDisplayName ||
-t.team?.abbreviation,
-stats: a.stats,
-labels,
-};
-foundGame = {
-eventId,
-summaryUrl: (gb as any).url,
-raw,
-};
-break;
-}
-}
-if (foundPlayer) break;
-}
-if (foundPlayer && foundGame) break;
-}
+              for (const a of athletes) {
+                const nmLC =
+                  a?.athlete?.displayName?.toLowerCase() ||
+                  a?.athlete?.shortName?.toLowerCase() ||
+                  "";
+                if (nmLC.includes(playerName.toLowerCase())) {
+                  foundPlayer = {
+                    name: a.athlete.displayName,
+                    team:
+                      t.team?.displayName ||
+                      t.team?.shortDisplayName ||
+                      t.team?.abbreviation,
+                    stats: a.stats,
+                    labels,
+                  };
+                  foundGame = {
+                    eventId,
+                    summaryUrl: (gb as any).url,
+                    raw,
+                  };
+                  break;
+                }
+              }
+              if (foundPlayer) break;
+            }
+            if (foundPlayer && foundGame) break;
+          }
 
-if (!foundPlayer || !foundGame) {
-toolResult = {
-ok: false,
-note: `Could not find stats for ${playerName} on ${dateParam}.`,
-scoreboardUrl,
-};
-} else {
-toolResult = {
-ok: true,
-sport,
-date: dateParam,
-eventId: foundGame.eventId,
-summaryUrl: foundGame.summaryUrl,
-player: foundPlayer,
-};
-}
-}
-}
-}
+          if (!foundPlayer || !foundGame) {
+            toolResult = {
+              ok: false,
+              note: `Could not find stats for ${playerName} on ${dateParam}.`,
+              scoreboardUrl,
+            };
+          } else {
+            toolResult = {
+              ok: true,
+              sport,
+              date: dateParam,
+              eventId: foundGame.eventId,
+              summaryUrl: foundGame.summaryUrl,
+              player: foundPlayer,
+            };
+          }
+        }
+      }
+    }
 
-/* -------------------- 4) PLAYER SEASON STATS -------------------- */
+    /* -------------------- 4) PLAYER SEASON STATS -------------------- */
 
-if (name === "get_player_season_stats") {
-const sport = args.sport as SportKey;
-const playerName = args.playerName as string;
-const season: number | undefined = args.season;
+    if (name === "get_player_season_stats") {
+      const sport = args.sport as SportKey;
+      const playerName = args.playerName as string;
+      const season: number | undefined = args.season;
 
-const found = await searchPlayer(playerName, sport);
-if (!found) {
-toolResult = { ok: false, note: `Player '${playerName}' not found on ESPN.` };
-} else {
-const info = await getPlayerDetails(found.sport, found.id, season);
+      const found = await searchPlayer(playerName, sport);
+      if (!found) {
+        toolResult = { ok: false, note: `Player '${playerName}' not found on ESPN.` };
+      } else {
+        const info = await getPlayerDetails(found.sport, found.id, season);
 
-if (!info.ok) {
-toolResult = {
-ok: false,
-note: info.note ?? "Could not fetch season stats.",
-};
-} else {
-toolResult = {
-ok: true,
-player: {
-name: info.name,
-team: info.team,
-position: info.position,
-season: info.season,
-seasonLabel: info.seasonLabel,
-seasonStatsList: info.seasonStatsList,
-url: info.url,
-},
-};
-}
-}
-}
+        if (!info.ok) {
+          toolResult = {
+            ok: false,
+            note: info.note ?? "Could not fetch season stats.",
+          };
+        } else {
+          toolResult = {
+            ok: true,
+            player: {
+              name: info.name,
+              team: info.team,
+              position: info.position,
+              season: info.season,
+              seasonLabel: info.seasonLabel,
+              seasonStatsList: info.seasonStatsList,
+              url: info.url,
+            },
+          };
+        }
+      }
+    }
 
-/* -------------------- 5) COMPARE NFL PLAYERS (FANTASY) -------------------- */
+    /* -------------------- 5) COMPARE NFL PLAYERS (FANTASY) -------------------- */
 
-if (name === "compare_players_nfl") {
-const season = (args.season as number | undefined) ?? new Date().getFullYear();
-const players: string[] = (args.players || []).slice(0, 6);
+    if (name === "compare_players_nfl") {
+      const season = (args.season as number | undefined) ?? new Date().getFullYear();
+      const players: string[] = (args.players || []).slice(0, 6);
 
-const rows: any[] = [];
-for (const nm of players) {
-const found = await searchPlayer(nm, "nfl");
-if (!found) {
-rows.push({ name: nm, note: "Player not found." });
-continue;
-}
+      const rows: any[] = [];
+      for (const nm of players) {
+        const found = await searchPlayer(nm, "nfl");
+        if (!found) {
+          rows.push({ name: nm, note: "Player not found." });
+          continue;
+        }
 
-const info = await getPlayerDetails("nfl", found.id, season);
-const norm = normalizeNFLStats(info.seasonStats);
-const fantasy = computeFantasyFromNFL(norm);
+        const info = await getPlayerDetails("nfl", found.id, season);
+        const norm = normalizeNFLStats(info.seasonStats);
+        const fantasy = computeFantasyFromNFL(norm);
 
-rows.push({
-name: info.name,
-team: info.team,
-pos: info.position,
-passYds: norm?.passYds,
-passTD: norm?.passTD,
-rushYds: norm?.rushYds,
-rushTD: norm?.rushTD,
-recYds: norm?.recYds,
-recTD: norm?.recTD,
-stdPG: fantasy?.perGame.standard,
-pprPG: fantasy?.perGame.ppr,
-});
-}
+        rows.push({
+          name: info.name,
+          team: info.team,
+          pos: info.position,
+          passYds: norm?.passYds,
+          passTD: norm?.passTD,
+          rushYds: norm?.rushYds,
+          rushTD: norm?.rushTD,
+          recYds: norm?.recYds,
+          recTD: norm?.recTD,
+          stdPG: fantasy?.perGame.standard,
+          pprPG: fantasy?.perGame.ppr,
+        });
+      }
 
-const header =
-"Name Team Pos PassYds TD RushYds TD RecYds TD Std/G PPR/G";
-const lines = rows.map((r) =>
-`${(r.name || "").padEnd(20)} ${(r.team || "").padEnd(4)} ${(r.pos || "").padEnd(
-3
-)} ${String(r.passYds ?? "-").padStart(6)} ${String(r.passTD ?? "-").padStart(
-2
-)} ${String(r.rushYds ?? "-").padStart(6)} ${String(r.rushTD ?? "-").padStart(
-2
-)} ${String(r.recYds ?? "-").padStart(6)} ${String(r.recTD ?? "-").padStart(
-2
-)} ${String(r.stdPG ?? "-").padStart(5)} ${String(r.pprPG ?? "-").padStart(5)}`
-);
+      const header =
+        "Name Team Pos PassYds TD RushYds TD RecYds TD Std/G PPR/G";
+      const lines = rows.map((r) =>
+        `${(r.name || "").padEnd(20)} ${(r.team || "").padEnd(4)} ${(r.pos || "").padEnd(
+          3
+        )} ${String(r.passYds ?? "-").padStart(6)} ${String(r.passTD ?? "-").padStart(
+          2
+        )} ${String(r.rushYds ?? "-").padStart(6)} ${String(r.rushTD ?? "-").padStart(
+          2
+        )} ${String(r.recYds ?? "-").padStart(6)} ${String(r.recTD ?? "-").padStart(
+          2
+        )} ${String(r.stdPG ?? "-").padStart(5)} ${String(r.pprPG ?? "-").padStart(5)}`
+      );
 
-toolResult = { ok: true, table: [header, ...lines].join("\n") };
-}
+      toolResult = { ok: true, table: [header, ...lines].join("\n") };
+    }
 
-/* -------------------- 6) BETTING ODDS -------------------- */
+    /* -------------------- 6) BETTING ODDS -------------------- */
 
-if (name === "get_odds") {
-try {
-const odds = await getOdds(args.sport);
-toolResult = { ok: true, lines: formatOdds(odds) };
-} catch (error: any) {
-toolResult = { ok: false, note: `Failed to fetch odds: ${error.message}` };
-}
-}
+    if (name === "get_odds") {
+      try {
+        const odds = await getOdds(args.sport);
+        toolResult = { ok: true, lines: formatOdds(odds) };
+      } catch (error: any) {
+        toolResult = { ok: false, note: `Failed to fetch odds: ${error.message}` };
+      }
+    }
 
-// Add tool call and tool result into the conversation
-messages.push(firstMessage);
-messages.push({
-role: "tool",
-tool_call_id: call.id,
-content: JSON.stringify(toolResult),
-});
+    // Add tool call and tool result into the conversation
+    messages.push(firstMessage);
+    messages.push({
+      role: "tool",
+      tool_call_id: call.id,
+      content: JSON.stringify(toolResult),
+    });
 
-// Second pass: turn toolResult into a natural-language answer
-const final = await client.chat.completions.create({
-model: CHAT_MODEL,
-messages,
-});
+    // Second pass: turn toolResult into a natural-language answer
+    const final = await client.chat.completions.create({
+      model: CHAT_MODEL,
+      messages,
+    });
 
-return toPlainTextResponse(final.choices[0].message.content);
+    return toPlainTextResponse(final.choices[0].message.content);
+
+  } catch (error: any) {
+    console.error("Chatbot Error:", error);
+    return `Error: ${error.message}. Please check your API key and configuration.`;
+  }
 }
