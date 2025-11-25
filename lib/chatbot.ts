@@ -246,7 +246,7 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
             enum: ["basketball_nba", "football_nfl", "baseball_mlb", "basketball_ncaab"],
           },
         },
-        required: ["sport"],
+        required: [],
       },
     },
   },
@@ -566,8 +566,24 @@ export async function runChat(query: string): Promise<string> {
 
     if (name === "get_odds") {
       try {
-        const odds = await getOdds(args.sport);
-        toolResult = { ok: true, lines: formatOdds(odds) };
+        if (args.sport) {
+          const odds = await getOdds(args.sport);
+          toolResult = { ok: true, lines: formatOdds(odds) };
+        } else {
+          // Fetch for all default sports
+          const sports = ["basketball_nba", "football_nfl", "baseball_mlb", "basketball_ncaab"];
+          const results = await Promise.all(
+            sports.map(async (s) => {
+              try {
+                const odds = await getOdds(s);
+                return `--- ${s.replace('_', ' ').toUpperCase()} ---\n${formatOdds(odds)}`;
+              } catch (e) {
+                return `--- ${s.replace('_', ' ').toUpperCase()} ---\nFailed to fetch odds.`;
+              }
+            })
+          );
+          toolResult = { ok: true, lines: results.join("\n\n") };
+        }
       } catch (error: any) {
         toolResult = { ok: false, note: `Failed to fetch odds: ${error.message}` };
       }
