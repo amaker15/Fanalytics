@@ -14,7 +14,7 @@ import { runChat } from '@/lib/chatbot';
 
 export async function POST(request: NextRequest) {
   try {
-    const { query } = await request.json();
+    const { query, history } = await request.json();
 
     if (!query || typeof query !== 'string') {
       return NextResponse.json(
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use the Nebius-backed chat workflow
-    const answer = await runChat(query);
+    const answer = await runChat(query, history);
 
     return NextResponse.json({
       ok: true,

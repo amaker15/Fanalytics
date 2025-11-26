@@ -24,6 +24,8 @@ import {
   computeFantasyFromNFL,
   findEventIdByTeam,
   getPlayerGameStats,
+  getLeagueLeaders,
+  formatLeagueLeaders,
 } from "./espn-data";
 import { getOdds, formatOdds } from "./odds";
 
@@ -250,13 +252,34 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "get_league_leaders",
+      description: "Get the top players (league leaders) for a specific sport and season.",
+      parameters: {
+        type: "object",
+        properties: {
+          sport: {
+            type: "string",
+            enum: ["nba", "nfl", "mlb", "mcb", "nhl"],
+          },
+          season: {
+            type: "number",
+            description: "Season year, e.g. 2025. If omitted, use current/latest.",
+          },
+        },
+        required: ["sport"],
+      },
+    },
+  },
 ];
 
 /* ============================================================
    CORE CHAT LOGIC
    ============================================================ */
 
-export async function runChat(query: string): Promise<string> {
+export async function runChat(query: string, history: any[] = []): Promise<string> {
   let client;
   try {
     client = getAIClient();
@@ -276,8 +299,10 @@ export async function runChat(query: string): Promise<string> {
         "- Respond in plain text only. Do not use Markdown, tables, bullet lists, bold, italics, or special formatting.",
         "- NEVER output JSON. Speak in natural language.",
         "- For NFL player comparisons, use the compare_players_nfl tool.",
+        "- For 'top players' or 'leaders' queries, use the get_league_leaders tool.",
       ].join("\n"),
     },
+    ...history,
     { role: "user", content: query },
   ];
 
@@ -586,6 +611,20 @@ export async function runChat(query: string): Promise<string> {
         }
       } catch (error: any) {
         toolResult = { ok: false, note: `Failed to fetch odds: ${error.message}` };
+      }
+    }
+    /* -------------------- 7) LEAGUE LEADERS -------------------- */
+
+    if (name === "get_league_leaders") {
+      const sport = args.sport as SportKey;
+      const season: number | undefined = args.season;
+
+      const result = await getLeagueLeaders(sport, season);
+      if (!result.ok || !result.leaders) {
+        toolResult = { ok: false, note: result.note ?? "No leaders data found." };
+      } else {
+        const formatted = formatLeagueLeaders(result.leaders);
+        toolResult = { ok: true, lines: formatted };
       }
     }
 

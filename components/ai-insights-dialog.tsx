@@ -53,7 +53,10 @@ export default function AIInsightsDialog({ children, initialQuery = '' }: AIInsi
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ query: userMessage.content }),
+                body: JSON.stringify({
+                    query: userMessage.content,
+                    history: messages.map(m => ({ role: m.role, content: m.content }))
+                }),
             });
 
             const data = await response.json();
@@ -148,8 +151,8 @@ export default function AIInsightsDialog({ children, initialQuery = '' }: AIInsi
                                     >
                                         <div
                                             className={`max-w-[85%] rounded-lg px-4 py-2 ${message.role === 'user'
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-zinc-800 text-zinc-200'
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-zinc-800 text-zinc-200'
                                                 }`}
                                         >
                                             <div className="whitespace-pre-wrap text-sm">

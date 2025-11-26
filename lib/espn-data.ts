@@ -755,6 +755,7 @@ export type PlayerGameStatsResult = {
         labels?: string[];
     };
     note?: string;
+    summaryUrl?: string;
 };
 
 /**
@@ -798,56 +799,127 @@ export async function getPlayerGameStats(
         };
     }
 
-    const { boxscore } = await getBoxscore(sport, eventId);
-    const teams =
-        boxscore?.players ||
-        boxscore?.boxscore?.players ||
-        boxscore?.teams ||
-        [];
+    const gb = await getBoxscore(sport, eventId);
+    const raw: any = (gb as any).rawSummary ?? (gb as any).raw ?? (gb as any).data ?? null;
+    const box = (gb as any).boxscore ?? raw?.gamePackageJSON?.boxscore ?? raw?.boxscore;
 
-    let result: PlayerGameStatsResult = {
-        ok: false,
+    if (!box) {
+        return {
+            ok: false,
+            sport,
+            eventId,
+            date,
+            note: "Boxscore not available yet.",
+        };
+    }
+
+    const teams = box?.players || box?.teams || [];
+    let foundPlayer: any = null;
+
+    for (const t of teams) {
+        const statsTable = t.statistics?.[0];
+        const labels = statsTable?.labels || statsTable?.names || [];
+        const athletes = statsTable?.athletes || t.athletes || [];
+
+        for (const a of athletes) {
+            const nmLC =
+                a?.athlete?.displayName?.toLowerCase() ||
+                a?.athlete?.shortName?.toLowerCase() ||
+                "";
+            if (nmLC.includes(playerName.toLowerCase())) {
+                foundPlayer = {
+                    name: a.athlete.displayName,
+                    team:
+                        t.team?.displayName ||
+                        t.team?.shortDisplayName ||
+                        t.team?.abbreviation,
+                    stats: a.stats,
+                    labels,
+                };
+                break;
+            }
+        }
+        if (foundPlayer) break;
+    }
+
+    if (!foundPlayer) {
+        return {
+            ok: false,
+            sport,
+            eventId,
+            date,
+            note: `Player ${playerName} not found in boxscore.`,
+        };
+    }
+
+    return {
+        ok: true,
         sport,
         eventId,
         date,
-        note: "No stats found for that player in that game.",
+        summaryUrl: (gb as any).url,
+        player: foundPlayer,
     };
+}
 
-    for (const teamBlock of teams) {
-        const teamName =
-            teamBlock?.team?.displayName ||
-            teamBlock?.team?.shortDisplayName ||
-            teamBlock?.team?.abbreviation;
+/* ============================================================
+   LEAGUE LEADERS
+   ============================================================ */
 
-        const statsTable = teamBlock?.statistics?.[0];
-        const labels: string[] = statsTable?.labels || statsTable?.names || [];
+export async function getLeagueLeaders(sport: SportKey, season?: number): Promise<{ ok: boolean; leaders?: any[]; note?: string }> {
+    // Unofficial endpoint pattern:
+    // https://site.api.espn.com/apis/site/v3/sports/:sport/:league/leaders
 
-        const athletes = statsTable?.athletes || teamBlock?.athletes || [];
+    // Map 'mcb' to 'mens-college-basketball' for the URL
+    const leaguePath = SPORT_PATH[sport];
 
-        for (const a of athletes) {
-            const nameLC =
-                a?.athlete?.displayName?.toLowerCase?.() ||
-                a?.athlete?.shortName?.toLowerCase?.() ||
-                "";
-            if (!nameLC) continue;
+    // Note: v3 endpoint fails if we pass ?season=2025 (current year).
+    // So we only append season if it is provided AND NOT the current year.
+    const currentYear = new Date().getFullYear();
+    const shouldUseSeasonParam = season && season !== currentYear;
 
-            if (nameLC.includes(playerName.toLowerCase())) {
-                result = {
-                    ok: true,
-                    sport,
-                    eventId,
-                    date,
-                    player: {
-                        name: a.athlete.displayName,
-                        team: teamName,
-                        stats: a.stats,
-                        labels,
-                    },
-                };
-                return result;
-            }
+    const url = shouldUseSeasonParam
+        ? `https://site.api.espn.com/apis/site/v3/sports/${leaguePath}/leaders?season=${season}`
+        : `https://site.api.espn.com/apis/site/v3/sports/${leaguePath}/leaders`;
+
+    try {
+        const data = await getJSON(url);
+
+        // Structure for v3 (NFL at least): data.leaders.categories[]
+        const categories = data?.leaders?.categories || data?.leaders || [];
+
+        if (!Array.isArray(categories) || !categories.length) {
+            return { ok: false, note: `No leaders data found for ${sport}.` };
         }
+
+        return { ok: true, leaders: categories };
+
+    } catch (e: any) {
+        return { ok: false, note: `Failed to fetch leaders for ${sport}. The API might not support this sport.` };
+    }
+}
+
+export function formatLeagueLeaders(leaders: any[], maxPerCategory = 5): string {
+    const lines: string[] = [];
+
+    for (const cat of leaders) {
+        const catName = cat.displayName || cat.name || "Category";
+        lines.push(`--- ${catName} ---`);
+
+        const players = cat.leaders || [];
+        for (const p of players.slice(0, maxPerCategory)) {
+            const rank = p.rank;
+            const athlete = p.athlete;
+            const name = athlete?.displayName || athlete?.fullName || athlete?.shortName || "Unknown";
+            const team = athlete?.team?.abbreviation || athlete?.team?.shortDisplayName || "";
+            const value = p.displayValue;
+
+            lines.push(`${rank}. ${name} (${team}) - ${value}`);
+        }
+        lines.push(""); // spacer
     }
 
-    return result;
+    return lines.join("\n");
 }
+
+
