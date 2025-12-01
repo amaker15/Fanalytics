@@ -3,6 +3,7 @@
  *
  * This API route handles AI-powered sports queries using the integrated
  * chatbot functionality with ESPN data and betting odds.
+ * Requires user authentication.
  *
  * @author Fanalytics Team
  * @created November 24, 2025
@@ -11,9 +12,23 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { runChat } from '@/lib/chatbot';
+import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+
+    if (authError || !session) {
+      return NextResponse.json(
+        { ok: false, error: 'Authentication required. Please sign in to use the chatbot.' },
+        { status: 401 }
+      );
+    }
+
     const { query, history } = await request.json();
 
     if (!query || typeof query !== 'string') {

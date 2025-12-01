@@ -12,6 +12,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,6 +30,7 @@ import {
 import { Combobox } from '@/components/ui/combobox';
 import { Menu, TrendingUp, RefreshCw } from 'lucide-react';
 import SportsNavigation from '@/components/sports-navigation';
+import { AuthButton } from '@/components/ui/auth-button';
 import AIInsightsDialog from '@/components/ai-insights-dialog';
 import {
   getNFLScores,
@@ -375,6 +377,7 @@ export default function Home() {
   const [players, setPlayers] = useState<ESPNPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [todos, setTodos] = useState<any[]>([]);
 
   const weeks = Array.from({ length: 18 }, (_, i) => i + 1);
 
@@ -408,7 +411,11 @@ export default function Home() {
     fetchNFLData();
   }, [selectedWeek]);
 
-
+  useEffect(() => {
+    supabase.from('todos').select().then(({ data, error }) => {
+      if (!error) setTodos(data ?? []);
+    });
+  }, []);
 
   // Helper functions for date ranges
   const getWeekStartDate = (week: number) => {
@@ -472,6 +479,7 @@ export default function Home() {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
+              <AuthButton />
               <AIInsightsDialog />
             </div>
           </div>

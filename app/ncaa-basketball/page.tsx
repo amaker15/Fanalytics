@@ -20,6 +20,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 import { Menu, Sparkles, TrendingUp, RefreshCw } from 'lucide-react';
 import SportsNavigation from '@/components/sports-navigation';
+import { AuthButton } from '@/components/ui/auth-button';
 import AIInsightsDialog from '@/components/ai-insights-dialog';
 import {
   getNCAABasketballScores,
@@ -323,6 +324,7 @@ export default function NCAABasketball() {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
+              <AuthButton />
               <AIInsightsDialog>
                 <Button className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white">
                   <Sparkles className="h-4 w-4 mr-2" />

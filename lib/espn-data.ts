@@ -10,8 +10,6 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import fetch from "node-fetch";
-
 /* ============================================================
 CORE TYPES & ENDPOINTS
 ============================================================ */
@@ -49,9 +47,23 @@ const ENDPOINTS: Record<SportKey, { scoreboard: string; summary: string }> = {
     },
 };
 
+// Check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined';
+
 async function getJSON(url: string): Promise<any> {
-    const res = await fetch(url, {
-        headers: { "User-Agent": "sportsbot/1.0 (educational)" } as any,
+    // If in browser and URL is ESPN API, use proxy route
+    let fetchUrl = url;
+    if (isBrowser && url.includes('site.api.espn.com')) {
+        // Extract the endpoint path from the full URL
+        const urlObj = new URL(url);
+        const endpoint = urlObj.pathname + urlObj.search;
+        fetchUrl = `/api/espn?endpoint=${encodeURIComponent(endpoint)}`;
+    }
+
+    const res = await fetch(fetchUrl, {
+        headers: isBrowser && fetchUrl.startsWith('/api/espn')
+            ? {}
+            : { "User-Agent": "sportsbot/1.0 (educational)" } as any,
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
     return res.json();

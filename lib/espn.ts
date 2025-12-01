@@ -11,6 +11,9 @@
 
 const ESPN_BASE_URL = 'https://site.api.espn.com/apis/site/v2/sports';
 
+// Check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined';
+
 // Types for ESPN API responses
 export interface ESPNEvent {
   id: string;
@@ -312,10 +315,18 @@ export interface ESPNTeamRosterResponse {
 // Generic fetch function with error handling
 async function fetchESPN(endpoint: string): Promise<unknown> {
   try {
-    const response = await fetch(`${ESPN_BASE_URL}${endpoint}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Fanalytics/1.0)',
-      },
+    // Use API route proxy in browser to avoid CORS issues
+    // Use direct fetch on server-side for better performance
+    const url = isBrowser
+      ? `/api/espn?endpoint=${encodeURIComponent(endpoint)}`
+      : `${ESPN_BASE_URL}${endpoint}`;
+
+    const response = await fetch(url, {
+      headers: isBrowser
+        ? {}
+        : {
+            'User-Agent': 'Mozilla/5.0 (compatible; Fanalytics/1.0)',
+          },
     });
 
     if (!response.ok) {

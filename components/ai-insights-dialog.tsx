@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,7 +13,9 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Sparkles, Bot, Send, Loader2 } from 'lucide-react';
+import { Sparkles, Bot, Send, Loader2, Lock } from 'lucide-react';
+import { supabase } from '@/lib/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 interface ChatMessage {
     id: string;
@@ -31,10 +34,37 @@ export default function AIInsightsDialog({ children, initialQuery = '' }: AIInsi
     const [query, setQuery] = useState(initialQuery);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isLoadingChat, setIsLoadingChat] = useState(false);
+    const [user, setUser] = useState<User | null>(null);
+    const [checkingAuth, setCheckingAuth] = useState(true);
+    const router = useRouter();
+
+    // Check authentication status
+    useEffect(() => {
+        const checkAuth = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            setUser(session?.user ?? null);
+            setCheckingAuth(false);
+        };
+
+        checkAuth();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
 
     const handleChatSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!query.trim() || isLoadingChat) return;
+
+        // Check authentication before submitting
+        if (!user) {
+            setOpen(false);
+            router.push('/auth');
+            return;
+        }
 
         const userMessage: ChatMessage = {
             id: Date.now().toString(),
@@ -106,6 +136,28 @@ export default function AIInsightsDialog({ children, initialQuery = '' }: AIInsi
                     </DialogDescription>
                 </DialogHeader>
 
+                {checkingAuth ? (
+                    <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                    </div>
+                ) : !user ? (
+                    <div className="space-y-4 py-8 text-center">
+                        <Lock className="h-12 w-12 mx-auto text-zinc-500 mb-4" />
+                        <h3 className="text-xl font-semibold text-white">Sign In Required</h3>
+                        <p className="text-zinc-400 mb-6">
+                            You need to be signed in to use the AI chatbot.
+                        </p>
+                        <Button
+                            onClick={() => {
+                                setOpen(false);
+                                router.push('/auth');
+                            }}
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                        >
+                            Sign In / Sign Up
+                        </Button>
+                    </div>
+                ) : (
                 <div className="space-y-4 py-4">
                     {/* Messages Area */}
                     <ScrollArea className="h-[400px] w-full pr-4">
@@ -200,6 +252,7 @@ export default function AIInsightsDialog({ children, initialQuery = '' }: AIInsi
                         </Button>
                     </form>
                 </div>
+                )}
             </DialogContent>
         </Dialog>
     );

@@ -1,7 +1,7 @@
 /*
  * Fanalytics - Sports Chatbot Library
  *
- * This library provides AI-powered sports chat functionality using OpenAI/Nebius,
+ * This library provides AI-powered sports chat functionality using xAI Grok, OpenAI, or Nebius,
  * integrating ESPN data, player stats, betting odds, and web search.
  *
  * @author Fanalytics Team
@@ -33,15 +33,25 @@ import { getOdds, formatOdds } from "./odds";
 // CONFIGURATION
 // ============================================================================
 
-const AI_PROVIDER = process.env.AI_PROVIDER || 'nebius'; // Default to nebius if not set, but keys must be present
+const AI_PROVIDER = process.env.AI_PROVIDER || 'xai'; // Default to xAI
 
 // Helper to get client based on provider
 function getAIClient() {
-  const apiKey = process.env.OPENAI_API_KEY || process.env.NEBIUS_API_KEY;
-  const baseURL = process.env.OPENAI_BASE_URL || (process.env.NEBIUS_API_KEY ? "https://api.tokenfactory.nebius.com/v1/" : undefined);
+  // xAI uses XAI_API_KEY environment variable
+  const apiKey = process.env.XAI_API_KEY || process.env.OPENAI_API_KEY || process.env.NEBIUS_API_KEY;
+  
+  // Determine base URL based on which API key is provided
+  let baseURL: string | undefined;
+  if (process.env.XAI_API_KEY) {
+    baseURL = "https://api.x.ai/v1";
+  } else if (process.env.NEBIUS_API_KEY) {
+    baseURL = "https://api.tokenfactory.nebius.com/v1/";
+  } else {
+    baseURL = process.env.OPENAI_BASE_URL;
+  }
 
   if (!apiKey) {
-    throw new Error("Missing API Key. Please set OPENAI_API_KEY or NEBIUS_API_KEY in .env.local");
+    throw new Error("Missing API Key. Please set XAI_API_KEY, OPENAI_API_KEY, or NEBIUS_API_KEY in .env.local");
   }
 
   return new OpenAI({
@@ -50,7 +60,7 @@ function getAIClient() {
   });
 }
 
-const CHAT_MODEL = process.env.OPENAI_MODEL || "openai/gpt-oss-120b"; // Default to Nebius model if not specified
+const CHAT_MODEL = process.env.OPENAI_MODEL || process.env.XAI_MODEL || "grok-3-mini"; // Default to Grok-3-mini
 
 /* ============================================================
    DATE HELPERS

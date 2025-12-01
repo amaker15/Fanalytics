@@ -20,6 +20,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 import { Menu, Sparkles, TrendingUp, RefreshCw } from 'lucide-react';
 import SportsNavigation from '@/components/sports-navigation';
+import { AuthButton } from '@/components/ui/auth-button';
 import AIInsightsDialog from '@/components/ai-insights-dialog';
 import {
   getMLBScores,
@@ -314,6 +315,7 @@ export default function MLB() {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
+              <AuthButton />
               <AIInsightsDialog>
                 <Button className="bg-gradient-to-r from-blue-600 to-white hover:from-blue-700 hover:to-gray-200 text-black font-semibold">
                   <Sparkles className="h-4 w-4 mr-2" />

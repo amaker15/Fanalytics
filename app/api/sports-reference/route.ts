@@ -13,6 +13,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import path from 'path';
 
+// Type declarations for Node.js globals (workaround for missing @types/node)
+declare const process: {
+  cwd: () => string;
+  platform: string;
+  env: Record<string, string | undefined>;
+};
+
+declare const Buffer: {
+  new (data: string | ArrayBuffer): { toString(): string };
+  isBuffer(value: unknown): boolean;
+};
+
+// Ensure this route uses Node.js runtime (required for child_process)
+export const runtime = 'nodejs';
+
 export async function POST(request: NextRequest) {
   try {
     const { sport, year, statType } = await request.json();
@@ -80,15 +95,15 @@ function runPythonScript(pythonCmd: string, scriptPath: string, sport: string, y
     let stdout = '';
     let stderr = '';
 
-    python.stdout.on('data', (data) => {
+    python.stdout.on('data', (data: string | { toString(): string }) => {
       stdout += data.toString();
     });
 
-    python.stderr.on('data', (data) => {
+    python.stderr.on('data', (data: string | { toString(): string }) => {
       stderr += data.toString();
     });
 
-    python.on('close', (code) => {
+    python.on('close', (code: number | null) => {
       if (code !== 0) {
         reject(new Error(`Python script failed with code ${code}: ${stderr}`));
       } else {
@@ -96,7 +111,7 @@ function runPythonScript(pythonCmd: string, scriptPath: string, sport: string, y
       }
     });
 
-    python.on('error', (error) => {
+    python.on('error', (error: Error) => {
       reject(error);
     });
 
