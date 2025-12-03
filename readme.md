@@ -1,6 +1,6 @@
 # Fanalytics - Sports Analytics with AI
 
-A comprehensive sports analytics application built with Next.js, featuring AI-powered insights using Nebius AI (Qwen gpt-oss-120b model) with access to live ESPN data, betting odds, and real-time sports analysis.
+A comprehensive sports analytics application built with Next.js, featuring AI-powered insights using Grok & OpenAI with access to live ESPN data, betting odds, and real-time sports analysis.
 
 ## Features
 
@@ -16,7 +16,7 @@ A comprehensive sports analytics application built with Next.js, featuring AI-po
 
 - **Frontend**: Next.js 15, React, TypeScript, Tailwind CSS
 - **UI Components**: Shadcn/ui, Radix UI
-- **AI Integration**: Nebius AI (Qwen gpt-oss-120b model) via OpenAI-compatible API
+- **AI Integration**: OpenAI GPT-5 and Grok 4 
 - **Data Sources**: ESPN APIs, The Odds API
 - **Authentication**: Supabase Auth
 - **Database**: Supabase
