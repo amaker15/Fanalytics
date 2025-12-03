@@ -99,9 +99,9 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## AI Integration
 
-### Nebius AI (Qwen gpt-oss-120b)
+### AI
 
-The app features an interactive AI chatbot powered by Nebius AI using the Qwen gpt-oss-120b model. The AI provides expert sports analysis with access to real-time data through specialized tools.
+The app features an interactive AI chatbot powered by Grok 4 and GPT-5. The AI provides expert sports analysis with access to real-time data through specialized tools.
 
 ### AI Chatbot Features
 
