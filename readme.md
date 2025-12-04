@@ -110,7 +110,7 @@ The app features an interactive AI chatbot powered by Grok 4 and GPT-5. The AI p
 
 ### AI Chatbot Features
 
-- **Interactive Dialog**: Ask questions about sports scores, player stats, betting odds, and analysis
+- **Interactive Dialog**: Ask questions about sports scores, player stats, betting odds, analysis, and more.
 - **Plain Text Responses**: Clean, readable responses without Markdown formatting
 - **Tool Integration**: AI automatically uses tools to fetch live data
 - **Multi-Sport Support**: Coverage for NFL, NBA, MLB, NCAA Basketball/Football, NHL
