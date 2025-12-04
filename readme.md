@@ -2,6 +2,11 @@
 
 A comprehensive sports analytics application built with Next.js, featuring AI-powered insights using Grok & OpenAI with access to live ESPN data, betting odds, and real-time sports analysis.
 
+
+## Fanalytics Video
+
+https://drive.google.com/file/d/1C0a1PDDJB8iHkvkVeTskpCUuJ9yrevt4/view
+
 ## Features
 
 - **Multi-Sport Coverage**: NFL, NBA, NCAA Football, NCAA Basketball, MLB, NHL
